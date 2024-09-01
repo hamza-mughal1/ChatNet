@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.db_models import Users as DbUserModel
 from fastapi import HTTPException
-
+import utils
 
 class UsersModel():
     def __init__(self):
@@ -17,6 +17,7 @@ class UsersModel():
         if db.query(DbUserModel).filter(DbUserModel.email == user_info.email).first():
             raise HTTPException(status_code=409, detail="email already exists")
         
+        user_info.password = utils.create_hashed_password(user_info.password)
         user = DbUserModel(**user_info.dict())
         
         db.add(user)
