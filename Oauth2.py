@@ -13,7 +13,7 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp":expiration})
+    to_encode.update({"exp":round(expiration.timestamp())})
 
     ecoded_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -22,15 +22,16 @@ def create_access_token(data: dict):
 def verify_token(token : str = Depends(oauth2_baerer)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-
         user_id = payload.get("user_id")
         user_name  = payload.get("user_name")
 
         if (user_id is None) or (user_name is None):
-            raise HTTPException(status=403, detail="token is invalid", headers = {"WWW-Authenticate":"Bearer"})
+            raise HTTPException(status_code=403, detail="token is invalid", headers = {"WWW-Authenticate":"Bearer"})
     
     except JWTError:
-        raise HTTPException(status=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
+        raise HTTPException(status_code=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
     
     return payload
     
+def testing():
+    pass
