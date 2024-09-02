@@ -1,0 +1,36 @@
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+
+SECRET_KEY = "77cfbtdl757pu7n526qng21g4ib3?2yy8n9dvj3arn4x52j183jyjunlrxcds6r6"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+oauth2_baerer = OAuth2PasswordBearer(tokenUrl="/login")
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+
+    expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp":expiration})
+
+    ecoded_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    return ecoded_token
+
+def verify_token(token : str = Depends(oauth2_baerer)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+
+        user_id = payload.get("user_id")
+        user_name  = payload.get("user_name")
+
+        if (user_id is None) or (user_name is None):
+            raise HTTPException(status=403, detail="token is invalid", headers = {"WWW-Authenticate":"Bearer"})
+    
+    except JWTError:
+        raise HTTPException(status=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
+    
+    return payload
+    
