@@ -5,7 +5,7 @@ from models.users_model import UsersModel
 from models import schemas
 from typing import List
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
 
 users_model = UsersModel()
 

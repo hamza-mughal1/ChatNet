@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from models.posts_model import PostsModel
 from models import schemas
 from typing import List
-router = APIRouter(prefix="/posts")
+router = APIRouter(prefix="/posts", tags=["posts"])
 
 posts_model = PostsModel()
 
