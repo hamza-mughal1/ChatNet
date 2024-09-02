@@ -11,7 +11,7 @@ class PostOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserOut(BaseModel):
     id: int
@@ -20,7 +20,7 @@ class UserOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CreateUser(BaseModel):
     name: str
@@ -47,3 +47,7 @@ class CreateUser(BaseModel):
             raise ValueError('Password must contain at least one special character.')
 
         return value
+    
+class Token(BaseModel):
+    access_token: str
+    token_type: str
