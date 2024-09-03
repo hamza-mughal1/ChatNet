@@ -41,3 +41,20 @@ class PostsModel():
             raise HTTPException(status_code=404, detail="No post found")
         
         return PostsModel.create_dict(db, post)
+    
+    def delete_post(self, db: utils.db_dependency, id, token_data):
+        post = db.query(DbPostModel).filter(DbPostModel.id == id).first()
+
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+
+        if not post.user_id == token_data["user_id"]:
+            raise HTTPException(status_code=403, detail="Access denied. (Don't have ownership)")
+
+        returning_post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
+        returning_post = PostsModel.create_dict(db, returning_post)
+
+        db.delete(post)
+        db.commit()
+        
+        return returning_post
