@@ -27,3 +27,7 @@ def update_user(db :  db_dependency, user_data: schemas.UpdateUser, token_data: 
 @router.delete("/", response_model=schemas.UserOut)
 def delete_user(db :  db_dependency, token_data: dict = Depends(verify_token)):
     return users_model.delete_user(db, token_data)
+
+@router.patch("/", response_model=schemas.UserOut)
+def patch_user(db:  db_dependency, user_data: schemas.UpdateUserPatch, token_data: dict = Depends(verify_token)):
+    return users_model.patch_user(db, user_data, token_data)

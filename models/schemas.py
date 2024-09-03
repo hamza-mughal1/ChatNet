@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator, FieldValidationInfo
 from datetime import datetime
 import re
+from typing import Optional
 
 class PostOut(BaseModel):
     id: int
@@ -66,3 +67,9 @@ class UpdateUser(BaseModel):
     user_name: str
     bio: str
     email: EmailStr
+
+class UpdateUserPatch(BaseModel):
+    name: Optional[str] = None
+    user_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    bio: Optional[str] = None

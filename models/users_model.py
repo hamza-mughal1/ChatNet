@@ -43,17 +43,44 @@ class UsersModel():
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        user.name = user_data.name
         try:
+            user.name = user_data.name
             user.user_name = user_data.user_name 
             user.bio = user_data.bio
             user.email = user_data.email
             db.commit()
         except IntegrityError as e:
             if "psycopg2.errors.UniqueViolation" in e.args[0]:
-                error_filed = e.args[0].split("DETAIL:  Key (")[1].split(")=")[0]
-            raise HTTPException(status_code=409, detail=f"{error_filed} already exists")
+                error_field = e.args[0].split("DETAIL:  Key (")[1].split(")=")[0]
+            else:
+                error_field = "{some-field}"
+            raise HTTPException(status_code=409, detail=f"{error_field} already exists")
     
+        return UsersModel.dict_with_follow(db, user)
+    
+    def patch_user(self, db: utils.db_dependency, user_data: schemas.UpdateUserPatch, token_data):
+        user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if  not all([i == None for i in user_data.model_dump().values()]):
+            try:
+                if user_data.name is not None:
+                    user.name = user_data.name
+                if user_data.user_name is not None:
+                    user.user_name = user_data.user_name
+                if user_data.bio is not None:
+                    user.bio = user_data.bio
+                if user_data.email is not None:
+                    user.email = user_data.email
+                db.commit()
+            except IntegrityError as e:
+                if "psycopg2.errors.UniqueViolation" in e.args[0]:
+                    error_field = e.args[0].split("DETAIL:  Key (")[1].split(")=")[0]
+                else:
+                    error_field = "{some-field}"
+                raise HTTPException(status_code=409, detail=f"{error_field} already exists")
+        
         return UsersModel.dict_with_follow(db, user)
     
     def delete_user(self, db: utils.db_dependency, token_data):
