@@ -9,6 +9,8 @@ class Users(Base):
     user_name = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
+    bio = Column(String, server_default="None")
+    profile_pic = Column(String, server_default="None")
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -19,15 +21,6 @@ class Posts(Base):
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     likes = Column(Integer, server_default="0")
-    created_at = Column(DateTime, server_default=func.now())
-
-
-class Profiles(Base):
-    __tablename__ = "profiles"
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    bio = Column(String, nullable=False)
-    profile_pic = Column(String, server_default="None")
     created_at = Column(DateTime, server_default=func.now())
 
 class Comments(Base):
