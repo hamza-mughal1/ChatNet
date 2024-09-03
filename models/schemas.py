@@ -6,9 +6,12 @@ from typing import Optional
 class PostOut(BaseModel):
     id: int
     user_id: int
+    user_name: str
+    profile_pic: str
     title: str
     content: str
     likes: int
+    comments: int
     created_at: datetime
 
     class Config:
