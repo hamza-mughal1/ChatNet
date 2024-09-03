@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from models import db_models
 from models.posts_model import PostsModel
 from models import schemas
 from typing import List
