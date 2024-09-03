@@ -76,3 +76,16 @@ class UpdateUserPatch(BaseModel):
     user_name: Optional[str] = None
     email: Optional[EmailStr] = None
     bio: Optional[str] = None
+
+class CreateComment(BaseModel):
+    content: str
+
+class CommentOut(BaseModel):
+    id: int
+    user_id: int
+    post_id: int
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
