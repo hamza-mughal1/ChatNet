@@ -17,6 +17,10 @@ class UserOut(BaseModel):
     id: int
     name: str
     user_name: str
+    followers: int
+    following: int
+    bio: str
+    profile_pic: str
     created_at: datetime
 
     class Config:
@@ -55,3 +59,10 @@ class Token(BaseModel):
 class CreatePost(BaseModel):
     title: str
     content: str
+
+
+class UpdateUser(BaseModel):
+    name: str
+    user_name: str
+    bio: str
+    email: EmailStr
