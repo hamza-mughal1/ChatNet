@@ -12,12 +12,25 @@ class CommentsModel():
         new_comment = Comments(user_id=token_data["user_id"], post_id=id, content=comment.content)
         db.add(new_comment)
         db.commit()
-
-        return utils.orm_to_dict(new_comment)
+        dic = utils.orm_to_dict(new_comment)
+        dic.update({"user_name":token_data["user_name"]})
+        return dic
     
 
-    def get_comment_by_post_id(self, db: utils.db_dependency, id, token_data):
-        return db.query(Comments).filter(Comments.post_id == id).all()
+    def get_comment_by_post_id(self, db: utils.db_dependency, id):
+        if db.query(DbPostModel).filter(DbPostModel.id == id).first() is None:
+            raise HTTPException(status_code=404, detail="post not found")
+        
+        
+        user_name = None
+        l = []
+        for i in db.query(Comments).filter(Comments.post_id == id).all():
+            dic = utils.orm_to_dict(i)
+            if user_name is None:
+                user_name = db.query(Users).filter(Users.id == i.user_id).first().user_name
+            dic.update({"user_name":user_name})
+            l.append(dic)
+        return l
     
     def delete_comment(self, db: utils.db_dependency, id, token_data):
         if (comment := db.query(Comments).filter(Comments.id == id).first()) is None:
