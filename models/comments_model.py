@@ -41,5 +41,17 @@ class CommentsModel():
 
         db.delete(comment)
         db.commit()
+        comment = utils.orm_to_dict(comment)
+        comment.update({"user_name":token_data["user_name"]})
+        return comment
+    
+    def get_comment_by_user_id(self, db: utils.db_dependency, token_data):
+        l = []
+        for i in db.query(Comments).filter(Comments.user_id == token_data["user_id"]).all():
+            dic = utils.orm_to_dict(i)
+            dic.update({"user_name":token_data["user_name"]})
+            l.append(dic)
+        return l
+    
 
         return comment
