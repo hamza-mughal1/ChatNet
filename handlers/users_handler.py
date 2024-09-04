@@ -52,3 +52,6 @@ def following_list(db: db_dependency, user_id: int):
 def follower_list(db: db_dependency, user_id: int):
     return users_model.follower_list(db, user_id)
 
+@router.patch("/change-password/", response_model=schemas.UserOut)
+def change_password(db: db_dependency, details: schemas.ChangePassword, token_data: dict = Depends(verify_token)):
+    return users_model.change_password(db, details, token_data)

@@ -149,3 +149,18 @@ class UsersModel():
 
         return l
     
+    def change_password(self, db: utils.db_dependency, details: schemas.ChangePassword, token_data):
+        result = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
+        db_email = result.email
+        db_pass = result.password
+
+        if details.email != db_email:
+            raise HTTPException(status_code=403, detail="Invalid Credentials")
+
+        if not utils.verify_password(details.password, db_pass):
+            raise HTTPException(status_code=403, detail="Invalid Credentials")
+        
+        result.password = utils.create_hashed_password(details.new_password)
+        db.commit()
+
+        return UsersModel.get_user(self, db, token_data["user_id"])
