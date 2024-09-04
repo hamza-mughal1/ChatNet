@@ -1,5 +1,6 @@
 import utils
 from models.db_models import Posts as DbPostModel, Users, Comments
+from models.db_models import Posts as DbPostModel, Users, Comments, Likes
 from fastapi import HTTPException
 
 class PostsModel():
@@ -11,9 +12,10 @@ class PostsModel():
         user = utils.orm_to_dict(obj[1])
         post = utils.orm_to_dict(obj[0])
         comments = db.query(Comments).filter(Comments.post_id == post["id"]).count()
+        likes = db.query(Likes).filter(Likes.post_id == post["id"]).count()
         dic = {**user}
         dic.update(post)
-        dic.update({"comments":comments})
+        dic.update({"comments":comments, "likes": likes})
 
         return dic
 
