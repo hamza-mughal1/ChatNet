@@ -137,3 +137,15 @@ class UsersModel():
             l.append(dic)
 
         return l
+    
+    def follower_list(self, db: utils.db_dependency, user_id):
+        l = []
+        for i in db.query(Follows).filter(Follows.following_id == user_id).all():
+            dic = utils.orm_to_dict(i)
+            follower_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.follower_id).first().user_name
+            following_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.following_id).first().user_name
+            dic.update({"follower_user_name":follower_user_name, "following_user_name":following_user_name})
+            l.append(dic)
+
+        return l
+    

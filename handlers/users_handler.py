@@ -48,3 +48,7 @@ def unfollow_user(db: db_dependency, user_id: int, token_data: dict = Depends(ve
 def following_list(db: db_dependency, user_id: int):
     return users_model.following_list(db, user_id)
 
+@router.get("/follower-list/{user_id}", response_model=List[schemas.FollowList])
+def follower_list(db: db_dependency, user_id: int):
+    return users_model.follower_list(db, user_id)
+
