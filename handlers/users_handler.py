@@ -55,3 +55,7 @@ def follower_list(db: db_dependency, user_id: int):
 @router.patch("/change-password/", response_model=schemas.UserOut)
 def change_password(db: db_dependency, details: schemas.ChangePassword, token_data: dict = Depends(verify_token)):
     return users_model.change_password(db, details, token_data)
+
+@router.get("/likes-list/", response_model=List[schemas.LikesList])
+def post_likes_list_by_user(db: db_dependency, token_data: dict = Depends(verify_token)):
+    return users_model.post_likes_list_by_user(db, token_data)

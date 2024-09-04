@@ -1,4 +1,4 @@
-from models.db_models import Users as DbUserModel, Follows
+from models.db_models import Users as DbUserModel, Follows, Likes
 from fastapi import HTTPException
 import utils
 from models import schemas
@@ -164,3 +164,13 @@ class UsersModel():
         db.commit()
 
         return UsersModel.get_user(self, db, token_data["user_id"])
+    
+
+    def post_likes_list_by_user(self, db: utils.db_dependency, token_data):
+        l = []
+        for i in db.query(Likes).filter(Likes.user_id == token_data["user_id"]).all():
+            dic = utils.orm_to_dict(i)
+            dic.update({"user_name":token_data["user_name"]})
+            l.append(dic)
+
+        return l
