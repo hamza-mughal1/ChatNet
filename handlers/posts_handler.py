@@ -29,3 +29,7 @@ def delete_post(db : utils.db_dependency, id: int, token_data: dict = Depends(ve
 def like_post_by_post_id(db : utils.db_dependency, id: int, token_data: dict = Depends(verify_token)):
     return posts_model.like_post(db, id, token_data)
 
+@router.post("/dislike/{id}", response_model=schemas.PostOut)
+def dislike_post_by_post_id(db : utils.db_dependency, id: int, token_data: dict = Depends(verify_token)):
+    return posts_model.dislike_post(db, id, token_data)
+

@@ -73,3 +73,15 @@ class PostsModel():
 
         return PostsModel.get_post(self, db, post_id)
     
+    def dislike_post(self, db: utils.db_dependency, post_id, token_data):
+        if db.query(DbPostModel).filter(DbPostModel.id == post_id).first() is None:
+            raise HTTPException(status_code=404, detail="post not found")
+        
+        if (like := db.query(Likes).filter(Likes.user_id == token_data["user_id"]).filter(Likes.post_id == post_id).first()) is None:
+            return PostsModel.get_post(self, db, post_id)
+
+        db.delete(like)
+        db.commit()
+
+        return PostsModel.get_post(self, db, post_id)
+    
