@@ -123,3 +123,10 @@ class ChangePassword(BaseModel):
             raise ValueError('Password must contain at least one special character.')
 
         return value
+    
+class LikesList(BaseModel):
+    id: int
+    post_id: int
+    user_id: int
+    user_name: str
+    created_at: datetime
