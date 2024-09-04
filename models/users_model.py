@@ -92,4 +92,10 @@ class UsersModel():
         db.commit()
 
         return UsersModel.dict_with_follow(db, user)
+    
+
+    def search_by_user_name(self, db: utils.db_dependency, user_name):
+        if (user := db.query(DbUserModel).filter(DbUserModel.user_name == user_name).first()) is None:
+            raise HTTPException(status_code=404, detail="user not found")
+    
         return UsersModel.dict_with_follow(db, user)
