@@ -53,5 +53,12 @@ class CommentsModel():
             l.append(dic)
         return l
     
+    def get_by_comment_id(self, db: utils.db_dependency, id):
+        if (comment := db.query(Comments).filter(Comments.id == id).first()) is None:
+            raise HTTPException(status_code=404, detail="comment not found")
 
+        
+        user_name = db.query(Users).filter(Users.id == comment.user_id).first().user_name
+        comment = utils.orm_to_dict(comment)
+        comment.update({"user_name": user_name})
         return comment

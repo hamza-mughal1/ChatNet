@@ -24,3 +24,7 @@ def delete_comment_by_comment_id(db : utils.db_dependency, id: int, token_data: 
 @router.get("/by-user/", response_model=List[schemas.CommentOut])
 def get_comment_by_user_id(db : utils.db_dependency, token_data: dict = Depends(verify_token)):
     return comments_model.get_comment_by_user_id(db, token_data)
+
+@router.get("/by-comment-id/{id}", response_model=schemas.CommentOut)
+def comment_by_comment_id(db : utils.db_dependency, id: int):
+    return comments_model.get_by_comment_id(db, id)
