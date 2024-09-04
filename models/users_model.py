@@ -31,7 +31,7 @@ class UsersModel():
         db.commit()
         return UsersModel.dict_with_follow(db, user)
     
-    def get_user(self, db: utils.db_dependency, id, token_data):
+    def get_user(self, db: utils.db_dependency, id):
         if (user := db.query(DbUserModel).filter(DbUserModel.id == id).first()) is None:
             raise HTTPException(status_code=404, detail="user not found")
     
@@ -91,4 +91,5 @@ class UsersModel():
         db.delete(user)
         db.commit()
 
+        return UsersModel.dict_with_follow(db, user)
         return UsersModel.dict_with_follow(db, user)

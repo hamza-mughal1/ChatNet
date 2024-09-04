@@ -17,8 +17,8 @@ def create_user(user: schemas.CreateUser, db:  db_dependency):
     return users_model.create_user(user, db)
 
 @router.get("/{id}", response_model=schemas.UserOut)
-def get_user(db :  db_dependency, id: int, token_data: dict = Depends(verify_token)):
-    return users_model.get_user(db, id, token_data)
+def get_user(db :  db_dependency, id: int):
+    return users_model.get_user(db, id)
 
 @router.put("/", response_model=schemas.UserOut)
 def update_user(db :  db_dependency, user_data: schemas.UpdateUser, token_data: dict = Depends(verify_token)):
