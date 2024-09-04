@@ -15,6 +15,7 @@ class Users(Base):
 
     posts = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
+    likes = relationship("Likes", back_populates="user", cascade="all, delete-orphan")
     following = relationship("Follows", foreign_keys="[Follows.follower_id]", back_populates="follower", cascade="all, delete-orphan")
     followers = relationship("Follows", foreign_keys="[Follows.following_id]", back_populates="following", cascade="all, delete-orphan")
 
@@ -25,11 +26,11 @@ class Posts(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
-    likes = Column(Integer, server_default="0")
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("Users", back_populates="posts")
     comments = relationship("Comments", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Likes", back_populates="post", cascade="all, delete-orphan")
 
 
 class Comments(Base):
@@ -54,6 +55,12 @@ class Follows(Base):
     follower = relationship("Users", foreign_keys=[follower_id], back_populates="following")
     following = relationship("Users", foreign_keys=[following_id], back_populates="followers")
 
+class Likes(Base):
+    __tablename__ = "likes"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    post_id = Column(Integer, ForeignKey('posts.id'))
+    created_at = Column(DateTime, server_default=func.now()) 
 
     user = relationship("Users", back_populates="likes")
     post = relationship("Posts", back_populates="likes")
