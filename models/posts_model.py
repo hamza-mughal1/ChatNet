@@ -85,3 +85,13 @@ class PostsModel():
 
         return PostsModel.get_post(self, db, post_id)
     
+    def post_likes_list(self, db: utils.db_dependency, post_id):
+        l = []
+        for i in db.query(Likes).filter(Likes.post_id == post_id).all():
+            dic = utils.orm_to_dict(i)
+            user_name = db.query(Users).filter(Users.id == i.user_id).first().user_name
+            dic.update({"user_name":user_name})
+            l.append(dic)
+
+        return l
+    

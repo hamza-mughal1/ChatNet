@@ -33,3 +33,6 @@ def like_post_by_post_id(db : utils.db_dependency, id: int, token_data: dict = D
 def dislike_post_by_post_id(db : utils.db_dependency, id: int, token_data: dict = Depends(verify_token)):
     return posts_model.dislike_post(db, id, token_data)
 
+@router.get("/likes-list/{post_id}", response_model=List[schemas.LikesList])
+def follower_list(db: utils.db_dependency, post_id: int):
+    return posts_model.post_likes_list(db, post_id)
