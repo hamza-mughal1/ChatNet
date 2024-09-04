@@ -84,6 +84,7 @@ class CommentOut(BaseModel):
     id: int
     user_id: int
     post_id: int
+    user_name: str
     content: str
     created_at: datetime
 
