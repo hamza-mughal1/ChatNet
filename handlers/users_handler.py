@@ -39,3 +39,8 @@ def search_user_by_user_name(db:  db_dependency, user_name: str):
 @router.post("/follow/{user_id}", response_model=schemas.UserOut)
 def follow_user(db: db_dependency, user_id: int, token_data: dict = Depends(verify_token)):
     return users_model.follow_user(db, user_id, token_data)
+
+@router.post("/unfollow/{user_id}", response_model=schemas.UserOut)
+def unfollow_user(db: db_dependency, user_id: int, token_data: dict = Depends(verify_token)):
+    return users_model.unfollow_user(db, user_id, token_data)
+
