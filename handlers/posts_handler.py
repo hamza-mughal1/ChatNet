@@ -24,3 +24,8 @@ def get_post(db : utils.db_dependency, id: int):
 @router.delete("/{id}", response_model=schemas.PostOut)
 def delete_post(db : utils.db_dependency, id: int, token_data: dict = Depends(verify_token)):
     return posts_model.delete_post(db, id, token_data)
+
+@router.post("/like/{id}", response_model=schemas.PostOut)
+def like_post_by_post_id(db : utils.db_dependency, id: int, token_data: dict = Depends(verify_token)):
+    return posts_model.like_post(db, id, token_data)
+
