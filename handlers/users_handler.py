@@ -35,3 +35,7 @@ def patch_user(db:  db_dependency, user_data: schemas.UpdateUserPatch, token_dat
 @router.get("/search/{user_name}", response_model=schemas.UserOut)
 def search_user_by_user_name(db:  db_dependency, user_name: str):
     return users_model.search_by_user_name(db, user_name)
+
+@router.post("/follow/{user_id}", response_model=schemas.UserOut)
+def follow_user(db: db_dependency, user_id: int, token_data: dict = Depends(verify_token)):
+    return users_model.follow_user(db, user_id, token_data)
