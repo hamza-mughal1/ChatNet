@@ -18,7 +18,7 @@ class PostsModel():
         return dic
 
     
-    def get_all_posts(self, db : utils.db_dependency, token_data):
+    def get_all_posts(self, db : utils.db_dependency):
         posts = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).all()
         l = []
         for i in posts:
