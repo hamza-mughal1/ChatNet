@@ -90,3 +90,11 @@ class CommentOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FollowList(BaseModel):
+    id: int
+    follower_id: int
+    following_id: int
+    follower_user_name: str
+    following_user_name: str 
+    created_at: datetime
