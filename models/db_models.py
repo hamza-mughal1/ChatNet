@@ -16,6 +16,8 @@ class Users(Base):
     posts = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
     likes = relationship("Likes", back_populates="user", cascade="all, delete-orphan")
+    access_token = relationship("AccessToken", back_populates="user", cascade="all, delete-orphan")
+    refresh_token = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     following = relationship("Follows", foreign_keys="[Follows.follower_id]", back_populates="follower", cascade="all, delete-orphan")
     followers = relationship("Follows", foreign_keys="[Follows.following_id]", back_populates="following", cascade="all, delete-orphan")
 
@@ -64,3 +66,24 @@ class Likes(Base):
 
     user = relationship("Users", back_populates="likes")
     post = relationship("Posts", back_populates="likes")
+
+class AccessToken(Base):
+    __tablename__ = "access_token"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    token = Column(String, nullable=False, unique=True)
+    created_at = Column(DateTime, server_default=func.now()) 
+
+    user = relationship("Users", back_populates="access_token")
+    refresh_token = relationship("RefreshToken", back_populates="access_token", cascade="all, delete-orphan")
+
+class RefreshTokens(Base):
+    __tablename__ = "refresh_tokens"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    access_token_id = Column(Integer, ForeignKey('access_token.id'))
+    token = Column(String, nullable=False, unique=True)
+    created_at = Column(DateTime, server_default=func.now()) 
+
+    user = relationship("Users", back_populates="refresh_token")
+    access_token = relationship("AccessToken", back_populates="refresh_token")
