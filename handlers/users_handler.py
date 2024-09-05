@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile
 from models.users_model import UsersModel
 from models import schemas
 from typing import List
@@ -59,3 +59,9 @@ def change_password(db: db_dependency, details: schemas.ChangePassword, token_da
 @router.get("/likes-list/", response_model=List[schemas.LikesList])
 def post_likes_list_by_user(db: db_dependency, token_data: dict = Depends(verify_token)):
     return users_model.post_likes_list_by_user(db, token_data)
+
+
+@router.post("/upload-profile-picture/", response_model=schemas.UserOut)
+async def upload_profile_picture(db: db_dependency, file: UploadFile, token_data: dict = Depends(verify_token)):
+    return await users_model.upload_profile_pic(db, file, token_data)
+

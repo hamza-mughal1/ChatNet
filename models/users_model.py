@@ -1,12 +1,21 @@
+from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
-from fastapi import HTTPException
+from config import HOST, PORT #type:ignore
+from fastapi import HTTPException, UploadFile, Request
+from fastapi.responses import FileResponse
 import utils
 from models import schemas
 from sqlalchemy.exc import IntegrityError
+from io import BytesIO
+from PIL import Image #type:ignore
+from datetime import datetime
+import os
 
 class UsersModel():
     def __init__(self):
-        pass
+        self.PROFILE_PIC_DIR = os.getcwd() + "/profile_pics/"
+        self.allowed_profile_image_type = ["png", "jpg", "jpeg"]
+        self.max_image_size = 2
 
     @staticmethod
     def dict_with_follow(db, user):
@@ -174,3 +183,40 @@ class UsersModel():
             l.append(dic)
 
         return l
+    
+    async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data):
+        
+
+        
+        if file.content_type.split("/")[1] not in self.allowed_profile_image_type:
+            raise HTTPException(status_code=400, detail=f"only {self.allowed_profile_image_type} types are allowed")
+        
+        
+        os.makedirs(self.PROFILE_PIC_DIR, exist_ok=True)
+        func_path = ""
+        for i in users_handler.router.routes:
+            if i.name == "get_profile_picture":
+                func_path = i.path
+
+        func_path = HOST + ":" + PORT + func_path.split("{")[0]
+
+        img = await file.read()
+        if len(img) > self.max_image_size * 1024 * 1024: 
+            raise HTTPException(status_code=400, detail=f"Request body size exceeds {self.max_image_size}MB limit.")
+        byte_stream = BytesIO(img)
+        image = Image.open(byte_stream)
+        unique_file_name = str(datetime.now().timestamp()).replace(".", "")
+        final_unique_name = unique_file_name + file.filename
+        url = final_unique_name
+        final_unique_name = self.PROFILE_PIC_DIR + final_unique_name
+        image.save(final_unique_name)
+        user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
+        if user.profile_pic != "None":
+            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic.split(func_path)[1]):
+                os.remove(temp)
+        
+        
+
+        user.profile_pic = func_path + url
+        db.commit()
+        return UsersModel.get_user(self, db, user.id)
