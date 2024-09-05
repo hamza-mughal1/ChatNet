@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+profile_pics/
 
 # Spyder project settings
 .spyderproject
