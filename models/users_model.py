@@ -220,3 +220,10 @@ class UsersModel():
         user.profile_pic = func_path + url
         db.commit()
         return UsersModel.get_user(self, db, user.id)
+    
+    async def get_profile_pic(self, profile_pic_id: str):
+        path = self.PROFILE_PIC_DIR + profile_pic_id
+        if not os.path.exists(path):
+            raise HTTPException(status_code=404, detail="no profile picture found")
+        
+        return FileResponse(path=path)

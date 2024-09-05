@@ -65,3 +65,6 @@ def post_likes_list_by_user(db: db_dependency, token_data: dict = Depends(verify
 async def upload_profile_picture(db: db_dependency, file: UploadFile, token_data: dict = Depends(verify_token)):
     return await users_model.upload_profile_pic(db, file, token_data)
 
+@router.get("/profile-picture/{profile_pic_id}")
+async def get_profile_picture(profile_pic_id: str):
+    return await users_model.get_profile_pic(profile_pic_id)
