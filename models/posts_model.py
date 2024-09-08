@@ -1,10 +1,19 @@
 import utils
 from models.db_models import Posts as DbPostModel, Users, Comments, Likes
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from datetime import datetime
+from PIL import Image #type:ignore
+from io import BytesIO
+import os
+from config import HOST, PORT #type:ignore
+from handlers import posts_handler
 
 class PostsModel():
     def __init__(self):
-        pass
+        self.POST_PIC_DIR = os.getcwd() + "/post_pics/"
+        self.allowed_post_image_type = ["png", "jpg", "jpeg"]
+        self.image_size = 2
 
     @staticmethod
     def create_dict(db, obj):
@@ -27,8 +36,35 @@ class PostsModel():
 
         return l
     
-    def create_post(self, db, post_data, token_data):
-        post = DbPostModel(user_id = token_data["user_id"], **post_data.model_dump())
+    async def create_post(self, db, title, content, file, token_data):
+        if file:
+            if file.content_type.split("/")[1] not in self.allowed_post_image_type:
+                raise HTTPException(status_code=400, detail=f"only {self.allowed_post_image_type} types are allowed")
+            
+            os.makedirs(self.POST_PIC_DIR, exist_ok=True)
+            func_path = ""
+            for i in posts_handler.router.routes:
+                if i.name == "get_post_image":
+                    func_path = i.path
+
+            func_path = HOST + ":" + PORT + func_path.split("{")[0]
+
+            img = await file.read()
+            if len(img) > self.image_size * 1024 * 1024: 
+                raise HTTPException(status_code=400, detail=f"Request body size exceeds {self.image_size}MB limit.")
+            byte_stream = BytesIO(img)
+            image = Image.open(byte_stream)
+            unique_file_name = str(datetime.now().timestamp()).replace(".", "")
+            final_unique_name = unique_file_name + file.filename
+            url = final_unique_name
+            final_unique_name = self.POST_PIC_DIR + final_unique_name
+            image.save(final_unique_name)
+            url = func_path + url
+        else:
+            url = "None"
+
+        post = DbPostModel(user_id = token_data["user_id"], title=title, content=content, image=url)
+
         db.add(post)
         db.commit()
 
