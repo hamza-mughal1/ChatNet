@@ -97,8 +97,20 @@ class UsersModel():
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        func_path = ""
+        for i in users_handler.router.routes:
+            if i.name == "get_profile_picture":
+                func_path = i.path
+
+        func_path = HOST + ":" + PORT + func_path.split("{")[0]
+        
+        if user.profile_pic != "None":
+            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic.split(func_path)[1]):
+                os.remove(temp)
+        
         db.delete(user)
         db.commit()
+
 
         return UsersModel.dict_with_follow(db, user)
     
