@@ -28,6 +28,7 @@ class Posts(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
+    image = Column(String, server_default="None")
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("Users", back_populates="posts")
