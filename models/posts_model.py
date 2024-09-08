@@ -141,4 +141,12 @@ class PostsModel():
             l.append(dic)
 
         return l
+
+
+    async def get_post_image(self, image_id):
+        path = self.POST_PIC_DIR + image_id
+        if not os.path.exists(path):
+            raise HTTPException(status_code=404, detail="no image found")
+        
+        return FileResponse(path=path)
     
