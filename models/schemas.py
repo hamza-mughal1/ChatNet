@@ -10,6 +10,7 @@ class PostOut(BaseModel):
     profile_pic: str
     title: str
     content: str
+    image: str
     likes: int
     comments: int
     created_at: datetime
