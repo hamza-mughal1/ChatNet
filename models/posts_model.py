@@ -91,6 +91,17 @@ class PostsModel():
         returning_post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
         returning_post = PostsModel.create_dict(db, returning_post)
 
+        func_path = ""
+        for i in posts_handler.router.routes:
+            if i.name == "get_post_image":
+                func_path = i.path
+
+        func_path = HOST + ":" + PORT + func_path.split("{")[0]
+        
+        if post.image != "None":
+            if os.path.exists(temp := self.POST_PIC_DIR + post.image.split(func_path)[1]):
+                os.remove(temp)
+
         db.delete(post)
         db.commit()
         
