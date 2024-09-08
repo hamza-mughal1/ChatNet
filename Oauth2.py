@@ -7,7 +7,7 @@ from models.db_models import Users, AccessTokens
 
 SECRET_KEY = "77cfbtdl757pu7n526qng21g4ib3?2yy8n9dvj3arn4x52j183jyjunlrxcds6r6"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_MINUTES = 60*24*30*1
 
 oauth2_baerer = OAuth2PasswordBearer(tokenUrl="/login")
