@@ -1,4 +1,4 @@
-import utils
+import utilities.utils as utils
 from models.db_models import Posts as DbPostModel, Users, Comments
 from fastapi import HTTPException
 

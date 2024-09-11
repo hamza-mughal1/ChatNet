@@ -3,7 +3,7 @@ from models.users_model import UsersModel
 from models import schemas
 from typing import List
 from Oauth2 import verify_token
-from utils import db_dependency
+from utilities.utils import db_dependency
 router = APIRouter(prefix="/users", tags=["users"])
 
 users_model = UsersModel()

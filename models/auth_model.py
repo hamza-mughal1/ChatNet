@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from models import schemas
-import utils
+import utilities.utils as utils
 from models import db_models
 import Oauth2
 from typing import Annotated

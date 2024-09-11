@@ -3,7 +3,7 @@ from models.posts_model import PostsModel
 from models import schemas
 from typing import List
 from Oauth2 import verify_token
-import utils
+import utilities.utils as utils
 from typing import Annotated
 
 router = APIRouter(prefix="/posts", tags=["posts"])

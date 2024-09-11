@@ -3,7 +3,7 @@ from models.comments_model import CommentsModel
 from models import schemas
 from typing import List
 from Oauth2 import verify_token
-import utils
+import utilities.utils as utils
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 

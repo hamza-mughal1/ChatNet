@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from utils import db_dependency
+from utilities.utils import db_dependency
 from models.db_models import Users, AccessTokens
 
 SECRET_KEY = "77cfbtdl757pu7n526qng21g4ib3?2yy8n9dvj3arn4x52j183jyjunlrxcds6r6"
