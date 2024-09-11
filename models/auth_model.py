@@ -78,3 +78,40 @@ def refresh(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_baerer
     return {"access_token":access_token, "refresh_token":refresh_token, "token_type":"Bearer"}
     
     
+@router.post("/logout")
+def logout_user(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_baerer), refresh_token: Annotated[str | None, Header()] = None):
+    if refresh_token is None:
+        raise HTTPException(status_code=403, detail="unable to find 'Refresh-token' header")
+    
+    try:
+        access_payload = jwt.decode(token, Oauth2.SECRET_KEY, algorithms=Oauth2.ALGORITHM)
+        pass
+    except JWTError:
+        raise HTTPException(status_code=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
+    
+    try:
+        refresh_payload = jwt.decode(refresh_token, Oauth2.SECRET_KEY, algorithms=Oauth2.ALGORITHM)
+    except JWTError:
+        raise HTTPException(status_code=403, detail="refresh token is invalid", headers={"WWW-Authenticate":"Bearer"})
+    
+    if access_payload.get("type") != "access-token":
+        raise HTTPException(status_code=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
+
+    if refresh_payload.get("type") != "refresh-token":
+        raise HTTPException(status_code=403, detail="refresh token is invalid", headers={"WWW-Authenticate":"Bearer"})
+
+    if (refresh_db_model := db.query(db_models.RefreshTokens).filter(db_models.RefreshTokens.token == refresh_token).first()) is None:
+        raise HTTPException(status_code=403, detail="refresh token is invalid", headers = {"WWW-Authenticate":"Bearer"})
+
+    
+
+    if (access_db_model := db.query(db_models.AccessTokens).filter(db_models.AccessTokens.id == refresh_db_model.access_token_id).first()).token != token:
+        raise HTTPException(status_code=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
+    
+    db.delete(access_db_model)
+    db.commit()
+
+    return {"messsage": "You have been logged out"}
+
+
+   
