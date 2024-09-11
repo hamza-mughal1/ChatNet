@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from models.comments_model import CommentsModel
 from models import schemas
 from typing import List
-from Oauth2 import verify_token
+from models.Oauth2 import verify_token
 import utilities.utils as utils
 
 router = APIRouter(prefix="/comments", tags=["comments"])

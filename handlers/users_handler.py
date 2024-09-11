@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile
 from models.users_model import UsersModel
 from models import schemas
 from typing import List
-from Oauth2 import verify_token
+from models.Oauth2 import verify_token
 from utilities.utils import db_dependency
 router = APIRouter(prefix="/users", tags=["users"])
 

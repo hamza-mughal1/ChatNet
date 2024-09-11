@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, UploadFile
 from models.posts_model import PostsModel
 from models import schemas
 from typing import List
-from Oauth2 import verify_token
+from models.Oauth2 import verify_token
 import utilities.utils as utils
 from typing import Annotated
 

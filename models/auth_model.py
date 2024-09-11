@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from models import schemas
 import utilities.utils as utils
 from models import db_models
-import Oauth2
+import models.Oauth2 as Oauth2
 from typing import Annotated
 from jose import jwt, JWTError
 
