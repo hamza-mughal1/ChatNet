@@ -1,9 +1,8 @@
 from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
-from config import HOST, PORT #type:ignore
+from utilities.settings import setting
 from fastapi import HTTPException, UploadFile, Request
 from fastapi.responses import FileResponse
-import utils
 import utilities.utils as utils
 from models import schemas
 from sqlalchemy.exc import IntegrityError
@@ -11,6 +10,8 @@ from io import BytesIO
 from PIL import Image #type:ignore
 from datetime import datetime
 import os
+HOST = setting.host
+PORT = setting.port
 
 class UsersModel():
     def __init__(self):

@@ -1,4 +1,3 @@
-import utils
 import utilities.utils as utils
 from models.db_models import Posts as DbPostModel, Users, Comments, Likes
 from fastapi import HTTPException
@@ -7,8 +6,10 @@ from datetime import datetime
 from PIL import Image #type:ignore
 from io import BytesIO
 import os
-from config import HOST, PORT #type:ignore
+from utilities.settings import setting
 from handlers import posts_handler
+HOST = setting.host
+PORT = setting.port
 
 class PostsModel():
     def __init__(self):

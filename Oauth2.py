@@ -2,14 +2,14 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from utils import db_dependency
 from utilities.utils import db_dependency
 from models.db_models import Users, AccessTokens
+from utilities.settings import setting
 
-SECRET_KEY = "77cfbtdl757pu7n526qng21g4ib3?2yy8n9dvj3arn4x52j183jyjunlrxcds6r6"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_MINUTES = 60*24*30*1
+SECRET_KEY = setting.secret_key
+ALGORITHM = setting.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = setting.access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_MINUTES = setting.refresh_token_expire_minutes
 
 oauth2_baerer = OAuth2PasswordBearer(tokenUrl="/login")
 
