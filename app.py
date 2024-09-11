@@ -2,10 +2,23 @@ from fastapi import FastAPI
 from models.database_orm import engine, Base
 from handlers import posts_handler, users_handler, comments_handler
 from models.auth_model import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:8000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
