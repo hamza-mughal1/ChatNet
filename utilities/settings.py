@@ -6,6 +6,7 @@ class EnvSetting(BaseSettings):
     db_username: str = "postgres"
     db_password: str
     db_host: str = "localhost"
+    db_port: int = 5432
     host: str
     port: int
     secret_key: str
