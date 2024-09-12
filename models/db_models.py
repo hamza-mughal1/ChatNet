@@ -5,12 +5,12 @@ from sqlalchemy.orm import relationship
 class Users(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    name = Column(String, nullable=False)
-    user_name = Column(String, nullable=False, unique=True)
-    email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
-    bio = Column(String, server_default="None")
-    profile_pic = Column(String, server_default="None")
+    name = Column(String(300), nullable=False)
+    user_name = Column(String(300), nullable=False, unique=True)
+    email = Column(String(300), nullable=False, unique=True)
+    password = Column(String(300), nullable=False)
+    bio = Column(String(300), server_default="None")
+    profile_pic = Column(String(300), server_default="None")
     created_at = Column(DateTime, server_default=func.now())
 
     posts = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
@@ -26,9 +26,9 @@ class Posts(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
-    title = Column(String, nullable=False)
-    content = Column(String, nullable=False)
-    image = Column(String, server_default="None")
+    title = Column(String(300), nullable=False)
+    content = Column(String(300), nullable=False)
+    image = Column(String(300), server_default="None")
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("Users", back_populates="posts")
@@ -41,7 +41,7 @@ class Comments(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     post_id = Column(Integer, ForeignKey('posts.id'))
-    content = Column(String, nullable=False)
+    content = Column(String(300), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("Users", back_populates="comments")
@@ -72,7 +72,7 @@ class AccessTokens(Base):
     __tablename__ = "access_tokens"
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
-    token = Column(String, nullable=False, unique=True)
+    token = Column(String(300), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now()) 
 
     user = relationship("Users", back_populates="access_token")
@@ -83,7 +83,7 @@ class RefreshTokens(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     access_token_id = Column(Integer, ForeignKey('access_tokens.id'))
-    token = Column(String, nullable=False, unique=True)
+    token = Column(String(300), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now()) 
 
     user = relationship("Users", back_populates="refresh_token")
