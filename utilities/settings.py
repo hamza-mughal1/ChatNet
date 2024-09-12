@@ -6,8 +6,8 @@ class EnvSetting(BaseSettings):
     db_username: str = "postgres"
     db_password: str
     db_host: str = "localhost"
-    host: str = "127.0.0.1"
-    port: str = "8000"
+    host: str
+    port: int
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
