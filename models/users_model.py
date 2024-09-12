@@ -31,7 +31,7 @@ class UsersModel():
 
     @staticmethod
     def dict_with_follow(db, user):
-        user.profile_pic = UsersModel.get_user_profile_url
+        user.profile_pic = UsersModel.get_user_profile_url(user)
         following = db.query(Follows).filter(Follows.follower_id == user.id).count()
         followers = db.query(Follows).filter(Follows.following_id == user.id).count()
         return {"followers":followers, "following":following,**utils.orm_to_dict(user)}
