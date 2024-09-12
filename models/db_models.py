@@ -1,6 +1,7 @@
-from models.database_orm import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, func, DateTime
+from models.database_orm import Base, engine
+from sqlalchemy import Column, Integer, String, ForeignKey, func, DateTime, text
 from sqlalchemy.orm import relationship
+from utilities.settings import setting
 
 class Users(Base):
     __tablename__ = "users"
@@ -88,3 +89,27 @@ class RefreshTokens(Base):
 
     user = relationship("Users", back_populates="refresh_token")
     access_token = relationship("AccessTokens", back_populates="refresh_token")
+
+
+def create_refresh_and_access_token_deletion_events(engine):
+    QUERY = f"""SET GLOBAL event_scheduler = ON;
+
+                CREATE EVENT IF NOT EXISTS delete_exp_acess_tokens
+                ON SCHEDULE EVERY 30 MINUTE
+                DO
+                DELETE FROM access_tokens
+                WHERE created_at < NOW() - INTERVAL {setting.access_token_expire_minutes} MINUTE;
+
+                CREATE EVENT IF NOT EXISTS delete_exp_refresh_tokens
+                ON SCHEDULE EVERY 30 MINUTE
+                DO
+                DELETE FROM refresh_tokens
+                WHERE created_at < NOW() - INTERVAL {setting.refresh_token_expire_minutes} MINUTE;""" 
+
+
+    with engine.connect() as connection:
+        connection.execute(text(QUERY))
+
+
+if setting.db == "mysql":
+    create_refresh_and_access_token_deletion_events(engine)
