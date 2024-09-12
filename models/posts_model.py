@@ -12,15 +12,25 @@ HOST = setting.host
 PORT = setting.port
 
 class PostsModel():
+    get_post_func_name = "get_post_image"
     def __init__(self):
-        self.POST_PIC_DIR = os.getcwd() + "/post_pics/"
+        image_folder_name = "post_pics"
+        self.POST_PIC_DIR = os.getcwd() + f"/{image_folder_name}/"
         self.allowed_post_image_type = ["png", "jpg", "jpeg"]
         self.image_size = 2
 
     @staticmethod
     def create_dict(db, obj):
-        user = utils.orm_to_dict(obj[1])
+        from models.users_model import UsersModel # import inside a function due to circlular import error
+        func_path = ""
+        for i in posts_handler.router.routes:
+            if i.name == PostsModel.get_post_func_name:
+                func_path = i.path
+        user = obj[1]
+        user.profile_pic = UsersModel.get_user_profile_url(user)
+        user = utils.orm_to_dict(user)
         post = utils.orm_to_dict(obj[0])
+        post["image"] = utils.generate_image_path(post["image"], func_path)
         comments = db.query(Comments).filter(Comments.post_id == post["id"]).count()
         likes = db.query(Likes).filter(Likes.post_id == post["id"]).count()
         dic = {**user}
@@ -44,12 +54,6 @@ class PostsModel():
                 raise HTTPException(status_code=400, detail=f"only {self.allowed_post_image_type} types are allowed")
             
             os.makedirs(self.POST_PIC_DIR, exist_ok=True)
-            func_path = ""
-            for i in posts_handler.router.routes:
-                if i.name == "get_post_image":
-                    func_path = i.path
-
-            func_path = HOST + ":" + PORT + func_path.split("{")[0]
 
             img = await file.read()
             if len(img) > self.image_size * 1024 * 1024: 
@@ -58,10 +62,8 @@ class PostsModel():
             image = Image.open(byte_stream)
             unique_file_name = str(datetime.now().timestamp()).replace(".", "")
             final_unique_name = unique_file_name + file.filename
+            image.save(self.POST_PIC_DIR + final_unique_name)
             url = final_unique_name
-            final_unique_name = self.POST_PIC_DIR + final_unique_name
-            image.save(final_unique_name)
-            url = func_path + url
         else:
             url = "None"
 
@@ -93,15 +95,8 @@ class PostsModel():
         returning_post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
         returning_post = PostsModel.create_dict(db, returning_post)
 
-        func_path = ""
-        for i in posts_handler.router.routes:
-            if i.name == "get_post_image":
-                func_path = i.path
-
-        func_path = HOST + ":" + PORT + func_path.split("{")[0]
-        
         if post.image != "None":
-            if os.path.exists(temp := self.POST_PIC_DIR + post.image.split(func_path)[1]):
+            if os.path.exists(temp := self.POST_PIC_DIR + post.image):
                 os.remove(temp)
 
         db.delete(post)

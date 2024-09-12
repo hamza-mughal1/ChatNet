@@ -1,7 +1,7 @@
 from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
 from utilities.settings import setting
-from fastapi import HTTPException, UploadFile, Request
+from fastapi import HTTPException, UploadFile
 from fastapi.responses import FileResponse
 import utilities.utils as utils
 from models import schemas
@@ -14,13 +14,24 @@ HOST = setting.host
 PORT = setting.port
 
 class UsersModel():
+    get_profile_picture_func_name = "get_profile_picture"
     def __init__(self):
-        self.PROFILE_PIC_DIR = os.getcwd() + "/profile_pics/"
+        picture_folder_name = "profile_pics"
+        self.PROFILE_PIC_DIR = os.getcwd() + f"/{picture_folder_name}/"
         self.allowed_profile_image_type = ["png", "jpg", "jpeg"]
         self.max_image_size = 2
 
     @staticmethod
+    def get_user_profile_url(user):
+        func_path = ""
+        for i in users_handler.router.routes:
+            if i.name == UsersModel.get_profile_picture_func_name:
+                func_path = i.path
+        return utils.generate_image_path(user.profile_pic, func_path)
+
+    @staticmethod
     def dict_with_follow(db, user):
+        user.profile_pic = UsersModel.get_user_profile_url
         following = db.query(Follows).filter(Follows.follower_id == user.id).count()
         followers = db.query(Follows).filter(Follows.following_id == user.id).count()
         return {"followers":followers, "following":following,**utils.orm_to_dict(user)}
@@ -99,15 +110,8 @@ class UsersModel():
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        func_path = ""
-        for i in users_handler.router.routes:
-            if i.name == "get_profile_picture":
-                func_path = i.path
-
-        func_path = HOST + ":" + PORT + func_path.split("{")[0]
-        
         if user.profile_pic != "None":
-            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic.split(func_path)[1]):
+            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic):
                 os.remove(temp)
         
         db.delete(user)
@@ -199,20 +203,11 @@ class UsersModel():
         return l
     
     async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data):
-        
-
-        
         if file.content_type.split("/")[1] not in self.allowed_profile_image_type:
             raise HTTPException(status_code=400, detail=f"only {self.allowed_profile_image_type} types are allowed")
         
         
         os.makedirs(self.PROFILE_PIC_DIR, exist_ok=True)
-        func_path = ""
-        for i in users_handler.router.routes:
-            if i.name == "get_profile_picture":
-                func_path = i.path
-
-        func_path = HOST + ":" + PORT + func_path.split("{")[0]
 
         img = await file.read()
         if len(img) > self.max_image_size * 1024 * 1024: 
@@ -221,17 +216,13 @@ class UsersModel():
         image = Image.open(byte_stream)
         unique_file_name = str(datetime.now().timestamp()).replace(".", "")
         final_unique_name = unique_file_name + file.filename
-        url = final_unique_name
-        final_unique_name = self.PROFILE_PIC_DIR + final_unique_name
-        image.save(final_unique_name)
+        image.save(self.PROFILE_PIC_DIR + final_unique_name)
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if user.profile_pic != "None":
-            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic.split(func_path)[1]):
+            if os.path.exists(temp := self.PROFILE_PIC_DIR + user.profile_pic):
                 os.remove(temp)
         
-        
-
-        user.profile_pic = func_path + url
+        user.profile_pic = final_unique_name
         db.commit()
         return UsersModel.get_user(self, db, user.id)
     
