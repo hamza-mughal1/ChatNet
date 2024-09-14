@@ -98,7 +98,7 @@ def create_refresh_and_access_token_deletion_events(engine):
                 ON SCHEDULE EVERY 30 MINUTE
                 DO
                 DELETE FROM access_tokens
-                WHERE created_at < NOW() - INTERVAL {setting.access_token_expire_minutes} MINUTE;
+                WHERE created_at < NOW() - INTERVAL {setting.refresh_token_expire_minutes} MINUTE;
 
                 CREATE EVENT IF NOT EXISTS delete_exp_refresh_tokens
                 ON SCHEDULE EVERY 30 MINUTE
