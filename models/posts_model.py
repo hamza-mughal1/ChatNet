@@ -6,10 +6,7 @@ from datetime import datetime
 from PIL import Image #type:ignore
 from io import BytesIO
 import os
-from utilities.settings import setting
 from handlers import posts_handler
-HOST = setting.host
-PORT = setting.port
 
 class PostsModel():
     get_post_func_name = "get_post_image"

@@ -1,6 +1,5 @@
 from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
-from utilities.settings import setting
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import FileResponse
 import utilities.utils as utils
@@ -10,8 +9,6 @@ from io import BytesIO
 from PIL import Image #type:ignore
 from datetime import datetime
 import os
-HOST = setting.host
-PORT = setting.port
 
 class UsersModel():
     get_profile_picture_func_name = "get_profile_picture"
@@ -22,16 +19,16 @@ class UsersModel():
         self.max_image_size = 2
 
     @staticmethod
-    def get_user_profile_url(user):
+    def get_user_profile_url(user, request):
         func_path = ""
         for i in users_handler.router.routes:
             if i.name == UsersModel.get_profile_picture_func_name:
                 func_path = i.path
-        return utils.generate_image_path(user.profile_pic, func_path)
+        return utils.generate_image_path(user.profile_pic, func_path, request)
 
     @staticmethod
-    def dict_with_follow(db, user):
-        user.profile_pic = UsersModel.get_user_profile_url(user)
+    def dict_with_follow(db, user, request):
+        user.profile_pic = UsersModel.get_user_profile_url(user, request)
         following = db.query(Follows).filter(Follows.follower_id == user.id).count()
         followers = db.query(Follows).filter(Follows.following_id == user.id).count()
         return {"followers":followers, "following":following,**utils.orm_to_dict(user)}
@@ -53,11 +50,11 @@ class UsersModel():
         db.commit()
         return UsersModel.dict_with_follow(db, user)
     
-    def get_user(self, db: utils.db_dependency, id):
+    def get_user(self, db: utils.db_dependency, id, request):
         if (user := db.query(DbUserModel).filter(DbUserModel.id == id).first()) is None:
             raise HTTPException(status_code=404, detail="user not found")
     
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
 
     def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data):

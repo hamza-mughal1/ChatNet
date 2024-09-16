@@ -7,8 +7,6 @@ class EnvSetting(BaseSettings):
     db_password: str
     db_host: str = "localhost"
     db_port: int = 5432
-    host: str
-    port: int
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

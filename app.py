@@ -11,7 +11,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 origins = [
-    "http://localhost:8000"
+    "*"
 ]
 
 app.add_middleware(
@@ -34,4 +34,4 @@ app.include_router(comments_handler.router)
 app.include_router(auth_router)
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host=setting.host, port=setting.port)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
