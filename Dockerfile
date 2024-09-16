@@ -23,8 +23,6 @@ RUN python -m venv /opt/venv && \
 COPY . .
 
 # Set environment variables (use defaults or adjust as needed)
-ENV HOST=0.0.0.0
-ENV PORT=8000
 ENV DB=postgresql 
 ENV DB_PASSWORD=jKCsgcjbVthpaPnwCMUUddEGCLiWyrAb 
 ENV DB_HOST=junction.proxy.rlwy.net 
