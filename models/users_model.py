@@ -199,7 +199,7 @@ class UsersModel():
 
         return l
     
-    async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data):
+    async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data, request):
         if file.content_type.split("/")[1] not in self.allowed_profile_image_type:
             raise HTTPException(status_code=400, detail=f"only {self.allowed_profile_image_type} types are allowed")
         
@@ -221,7 +221,7 @@ class UsersModel():
         
         user.profile_pic = final_unique_name
         db.commit()
-        return UsersModel.get_user(self, db, user.id)
+        return UsersModel.get_user(self, db, user.id, request)
     
     async def get_profile_pic(self, profile_pic_id: str):
         path = self.PROFILE_PIC_DIR + profile_pic_id
