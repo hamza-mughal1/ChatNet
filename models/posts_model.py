@@ -10,25 +10,35 @@ from handlers import posts_handler
 
 class PostsModel():
     get_post_func_name = "get_post_image"
+    image_folder_name = "post_pics"
+    POST_PIC_DIR = os.getcwd() + f"/{image_folder_name}/"
     def __init__(self):
-        image_folder_name = "post_pics"
-        self.POST_PIC_DIR = os.getcwd() + f"/{image_folder_name}/"
+        
         self.allowed_post_image_type = ["png", "jpg", "jpeg"]
         self.image_size = 2
 
     @staticmethod
-    def create_dict(db, obj, request):
-        from models.users_model import UsersModel # import inside a function due to circlular import error
+    def get_post_image_url(post, request):
+        path = PostsModel.POST_PIC_DIR + post["image"]
+        if not os.path.exists(path):
+            return "None"
+        
         func_path = ""
         for i in posts_handler.router.routes:
             if i.name == PostsModel.get_post_func_name:
                 func_path = i.path
+        return utils.generate_image_path(post["image"], func_path, request)
+
+    @staticmethod
+    def create_dict(db, obj, request):
+        from models.users_model import UsersModel # import inside a function due to circlular import error
+        
         user = obj[1]
         profile_pic = UsersModel.get_user_profile_url(user, request)
         user = utils.orm_to_dict(user)
         user["profile_pic"] = profile_pic
         post = utils.orm_to_dict(obj[0])
-        post["image"] = utils.generate_image_path(post["image"], func_path, request)
+        post["image"] = PostsModel.get_post_image_url(post, request)
         comments = db.query(Comments).filter(Comments.post_id == post["id"]).count()
         likes = db.query(Likes).filter(Likes.post_id == post["id"]).count()
         dic = {**user}

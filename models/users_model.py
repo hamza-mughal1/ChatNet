@@ -12,6 +12,8 @@ import os
 
 class UsersModel():
     get_profile_picture_func_name = "get_profile_picture"
+    picture_folder_name = "profile_pics"
+    PROFILE_PIC_DIR = os.getcwd() + f"/{picture_folder_name}/"
     def __init__(self):
         picture_folder_name = "profile_pics"
         self.PROFILE_PIC_DIR = os.getcwd() + f"/{picture_folder_name}/"
@@ -20,6 +22,10 @@ class UsersModel():
 
     @staticmethod
     def get_user_profile_url(user, request):
+        path = UsersModel.PROFILE_PIC_DIR + user.profile_pic
+        if not os.path.exists(path):
+            return "None"
+        
         func_path = ""
         for i in users_handler.router.routes:
             if i.name == UsersModel.get_profile_picture_func_name:
