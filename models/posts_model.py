@@ -17,17 +17,18 @@ class PostsModel():
         self.image_size = 2
 
     @staticmethod
-    def create_dict(db, obj):
+    def create_dict(db, obj, request):
         from models.users_model import UsersModel # import inside a function due to circlular import error
         func_path = ""
         for i in posts_handler.router.routes:
             if i.name == PostsModel.get_post_func_name:
                 func_path = i.path
         user = obj[1]
-        user.profile_pic = UsersModel.get_user_profile_url(user)
+        profile_pic = UsersModel.get_user_profile_url(user, request)
         user = utils.orm_to_dict(user)
+        user["profile_pic"] = profile_pic
         post = utils.orm_to_dict(obj[0])
-        post["image"] = utils.generate_image_path(post["image"], func_path)
+        post["image"] = utils.generate_image_path(post["image"], func_path, request)
         comments = db.query(Comments).filter(Comments.post_id == post["id"]).count()
         likes = db.query(Likes).filter(Likes.post_id == post["id"]).count()
         dic = {**user}
@@ -37,15 +38,15 @@ class PostsModel():
         return dic
 
     
-    def get_all_posts(self, db : utils.db_dependency):
+    def get_all_posts(self, db : utils.db_dependency, request):
         posts = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).all()
         l = []
         for i in posts:
-            l.append(PostsModel.create_dict(db, i))
+            l.append(PostsModel.create_dict(db, i, request))
 
         return l
     
-    async def create_post(self, db, title, content, file, token_data):
+    async def create_post(self, db, title, content, file, token_data, request):
         if file:
             if file.content_type.split("/")[1] not in self.allowed_post_image_type:
                 raise HTTPException(status_code=400, detail=f"only {self.allowed_post_image_type} types are allowed")
@@ -70,17 +71,17 @@ class PostsModel():
         db.commit()
 
         final_post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == post.id).first()
-        return PostsModel.create_dict(db, final_post)
+        return PostsModel.create_dict(db, final_post, request)
     
         
-    def get_post(self, db: utils.db_dependency, id):
+    def get_post(self, db: utils.db_dependency, id, request):
         post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
         if not post:
             raise HTTPException(status_code=404, detail="No post found")
         
-        return PostsModel.create_dict(db, post)
+        return PostsModel.create_dict(db, post, request)
     
-    def delete_post(self, db: utils.db_dependency, id, token_data):
+    def delete_post(self, db: utils.db_dependency, id, token_data, request):
         post = db.query(DbPostModel).filter(DbPostModel.id == id).first()
 
         if not post:
@@ -90,7 +91,7 @@ class PostsModel():
             raise HTTPException(status_code=403, detail="Access denied. (Don't have ownership)")
 
         returning_post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
-        returning_post = PostsModel.create_dict(db, returning_post)
+        returning_post = PostsModel.create_dict(db, returning_post, request)
 
         if post.image != "None":
             if os.path.exists(temp := self.POST_PIC_DIR + post.image):
@@ -101,7 +102,7 @@ class PostsModel():
         
         return returning_post
     
-    def like_post(self, db: utils.db_dependency, post_id, token_data):
+    def like_post(self, db: utils.db_dependency, post_id, token_data, request):
         if db.query(DbPostModel).filter(DbPostModel.id == post_id).first() is None:
             raise HTTPException(status_code=404, detail="post not found")
         
@@ -112,9 +113,9 @@ class PostsModel():
         db.add(like)
         db.commit()
 
-        return PostsModel.get_post(self, db, post_id)
+        return PostsModel.get_post(self, db, post_id, request)
     
-    def dislike_post(self, db: utils.db_dependency, post_id, token_data):
+    def dislike_post(self, db: utils.db_dependency, post_id, token_data, request):
         if db.query(DbPostModel).filter(DbPostModel.id == post_id).first() is None:
             raise HTTPException(status_code=404, detail="post not found")
         
@@ -124,7 +125,7 @@ class PostsModel():
         db.delete(like)
         db.commit()
 
-        return PostsModel.get_post(self, db, post_id)
+        return PostsModel.get_post(self, db, post_id, request)
     
     def post_likes_list(self, db: utils.db_dependency, post_id):
         l = []
