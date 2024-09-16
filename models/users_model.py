@@ -33,10 +33,10 @@ class UsersModel():
         followers = db.query(Follows).filter(Follows.following_id == user.id).count()
         return {"followers":followers, "following":following,**utils.orm_to_dict(user)}
 
-    def get_all_users(self, db : utils.db_dependency):    
-        return [UsersModel.dict_with_follow(db, i) for i in (db.query(DbUserModel).all())] 
+    def get_all_users(self, db : utils.db_dependency, request):    
+        return [UsersModel.dict_with_follow(db, i, request) for i in (db.query(DbUserModel).all())] 
     
-    def create_user(self, user_info, db: utils.db_dependency):
+    def create_user(self, user_info, db: utils.db_dependency, request):
         if db.query(DbUserModel).filter(DbUserModel.user_name == user_info.user_name).first():
             raise HTTPException(status_code=409, detail="user_name already exists")
         
@@ -48,7 +48,7 @@ class UsersModel():
         
         db.add(user)
         db.commit()
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
     def get_user(self, db: utils.db_dependency, id, request):
         if (user := db.query(DbUserModel).filter(DbUserModel.id == id).first()) is None:
@@ -56,8 +56,7 @@ class UsersModel():
     
         return UsersModel.dict_with_follow(db, user, request)
     
-
-    def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data):
+    def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data, request):
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -75,9 +74,9 @@ class UsersModel():
                 error_field = "{some-field}"
             raise HTTPException(status_code=409, detail=f"{error_field} already exists")
     
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
-    def patch_user(self, db: utils.db_dependency, user_data: schemas.UpdateUserPatch, token_data):
+    def patch_user(self, db: utils.db_dependency, user_data: schemas.UpdateUserPatch, token_data, request):
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -100,9 +99,9 @@ class UsersModel():
                     error_field = "{some-field}"
                 raise HTTPException(status_code=409, detail=f"{error_field} already exists")
         
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
-    def delete_user(self, db: utils.db_dependency, token_data):
+    def delete_user(self, db: utils.db_dependency, token_data, request):
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -115,16 +114,15 @@ class UsersModel():
         db.commit()
 
 
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
-
-    def search_by_user_name(self, db: utils.db_dependency, user_name):
+    def search_by_user_name(self, db: utils.db_dependency, user_name, request):
         if (user := db.query(DbUserModel).filter(DbUserModel.user_name == user_name).first()) is None:
             raise HTTPException(status_code=404, detail="user not found")
     
-        return UsersModel.dict_with_follow(db, user)
+        return UsersModel.dict_with_follow(db, user, request)
     
-    def follow_user(self, db: utils.db_dependency, user_id, token_data):
+    def follow_user(self, db: utils.db_dependency, user_id, token_data, request):
         if user_id == token_data["user_id"]:
             raise HTTPException(status_code=400, detail="Not allowed to follow yourself")
         if db.query(DbUserModel).filter(DbUserModel.id == user_id).first() is None:
@@ -137,9 +135,9 @@ class UsersModel():
         db.add(follow)
         db.commit()
 
-        return UsersModel.get_user(self, db, user_id)
+        return UsersModel.get_user(self, db, user_id, request)
     
-    def unfollow_user(self, db: utils.db_dependency, user_id, token_data):
+    def unfollow_user(self, db: utils.db_dependency, user_id, token_data, request):
         if user_id == token_data["user_id"]:
             raise HTTPException(status_code=400, detail="Not allowed to unfollow yourself")
         
@@ -149,7 +147,7 @@ class UsersModel():
         db.delete(follow)
         db.commit()
 
-        return UsersModel.get_user(self, db, user_id)
+        return UsersModel.get_user(self, db, user_id, request)
     
     def following_list(self, db: utils.db_dependency, user_id):
         l = []
@@ -189,7 +187,6 @@ class UsersModel():
 
         return UsersModel.get_user(self, db, token_data["user_id"])
     
-
     def post_likes_list_by_user(self, db: utils.db_dependency, token_data):
         l = []
         for i in db.query(Likes).filter(Likes.user_id == token_data["user_id"]).all():
