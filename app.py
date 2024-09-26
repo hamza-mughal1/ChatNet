@@ -3,8 +3,6 @@ from models.database_orm import engine, Base
 from handlers import posts_handler, users_handler, comments_handler
 from models.auth_model import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from utilities.settings import setting
 
 Base.metadata.create_all(bind=engine)
 
