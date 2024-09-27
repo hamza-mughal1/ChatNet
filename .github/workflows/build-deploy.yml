@@ -20,7 +20,7 @@ jobs:
       REFRESH_TOKEN_EXPIRE_MINUTES: ${{secrets.REFRESH_TOKEN_EXPIRE_MINUTES}}
 
     services:
-      postgres:
+      test_postgres:
         image: postgres
         env:
           POSTGRES_PASSWORD: ${{env.DB_PASSWORD}}
