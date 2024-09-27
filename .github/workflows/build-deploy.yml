@@ -6,7 +6,7 @@ jobs:
   build:
     env:
       DB: ${{secrets.DB}}
-      DB_NAME: ${{secrets.DB_NAME}}
+      DB_NAME: ${{secrets.DB_NAME}}_test
       DB_USERNAME: ${{secrets.DB_USERNAME}}
       DB_PASSWORD: ${{secrets.DB_PASSWORD}}
       DB_HOST: ${{secrets.DB_HOST}}
