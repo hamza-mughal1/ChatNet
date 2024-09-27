@@ -194,7 +194,7 @@ class UsersModel():
         result.password = utils.create_hashed_password(details.new_password)
         db.commit()
 
-        return UsersModel.get_user(self, db, token_data["user_id"])
+        return UsersModel.get_user(self, db, token_data["user_id"], request)
     
     def post_likes_list_by_user(self, db: utils.db_dependency, token_data):
         l = []
