@@ -151,7 +151,7 @@ class UsersModel():
             raise HTTPException(status_code=404, detail="user not found")
         
         if (follow := db.query(Follows).filter(Follows.follower_id == token_data["user_id"]).filter(Follows.following_id == user_id).first()) is None:
-            return UsersModel.get_user(self, db, user_id)
+            return UsersModel.get_user(self, db, user_id, request)
         
         db.delete(follow)
         db.commit()
