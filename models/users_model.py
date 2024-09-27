@@ -180,7 +180,7 @@ class UsersModel():
 
         return l
     
-    def change_password(self, db: utils.db_dependency, details: schemas.ChangePassword, token_data):
+    def change_password(self, db: utils.db_dependency, details: schemas.ChangePassword, token_data, request):
         result = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         db_email = result.email
         db_pass = result.password
