@@ -147,6 +147,9 @@ class UsersModel():
         if user_id == token_data["user_id"]:
             raise HTTPException(status_code=400, detail="Not allowed to unfollow yourself")
         
+        if db.query(DbUserModel).filter(DbUserModel.id == user_id).first() is None:
+            raise HTTPException(status_code=404, detail="user not found")
+        
         if (follow := db.query(Follows).filter(Follows.follower_id == token_data["user_id"]).filter(Follows.following_id == user_id).first()) is None:
             return UsersModel.get_user(self, db, user_id)
         
