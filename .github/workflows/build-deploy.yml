@@ -63,18 +63,18 @@ jobs:
           pip install pytest
           pytest
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - name: deploy to ubuntu server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{secrets.PROD_HOST}}
-          username: ${{secrets.PROD_USERNAME}}
-          password: ${{secrets.PROD_PASSWORD}}
-          key: ${{secrets.SSH_PRIVATE_KEY}}
-          script: |
-            cd app/ChatNet
-            git pull
-            echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - name: deploy to ubuntu server
+  #       uses: appleboy/ssh-action@v1.0.3
+  #       with:
+  #         host: ${{secrets.PROD_HOST}}
+  #         username: ${{secrets.PROD_USERNAME}}
+  #         password: ${{secrets.PROD_PASSWORD}}
+  #         key: ${{secrets.SSH_PRIVATE_KEY}}
+  #         script: |
+  #           cd app/ChatNet
+  #           git pull
+  #           echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
