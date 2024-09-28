@@ -167,5 +167,8 @@ def test_change_password(client):
     assert response.status_code == 200
     schemas.UserOut(**response.json())
     
+    time.sleep(1) # to avoid generating same JWT (if the same information passed in two JWT then they both will be same) that's why it will change the exp time
+    # by waiting for 1 sec
+    
     assert client.post("/login", data={"username": UserData.email.value, "password": UserData.password.value + "1"}).status_code == 200
     
