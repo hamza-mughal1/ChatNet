@@ -3,6 +3,18 @@ from tests.testing_database_setup import client
 from enum import Enum
 from jose import jwt
 from models import Oauth2
+import time
+import hashlib
+from PIL import Image
+from io import BytesIO
+
+def hash_image(image_path):
+    img = Image.open(image_path)
+    img = img.convert("RGB")  # Convert to RGB if not already
+    img = img.resize((8, 8))  # Resize to 8x8 for hashing
+    img_data = img.getdata()
+    hash_str = ''.join(['1' if r > 128 else '0' for r, g, b in img_data])
+    return hashlib.md5(hash_str.encode()).hexdigest()
 
 class UserData(Enum):
     name = "hamza"
@@ -172,3 +184,19 @@ def test_change_password(client):
     
     assert client.post("/login", data={"username": UserData.email.value, "password": UserData.password.value + "1"}).status_code == 200
     
+def test_image_upload(client):
+    create_user(client)
+    tokens = login_user(client)
+    header = {"Authorization": "Bearer " + tokens.json().get("access_token")}
+    with open("test_image.png", 'rb') as f:
+        img_data = f.read()
+        files = {"file": ("test_image.png", img_data)}
+        response = client.post("users/upload-profile-picture/", files=files, headers=header)
+        assert response.status_code == 200
+        url = response.json().get("profile_pic").split("/users/")[-1]
+        returned_img = client.get("users/" + url)
+        
+        hash1 = hash_image("test_image.png")
+        hash2 = hash_image(BytesIO(returned_img.content))
+        
+        assert hash1 == hash2
