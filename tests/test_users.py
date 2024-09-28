@@ -1,33 +1,13 @@
 from models import schemas
 from tests.testing_database_setup import client
-from enum import Enum
 from jose import jwt
 from models import Oauth2
 import time
-import hashlib
-from PIL import Image
 from io import BytesIO
+import pytest
+from tests.utils import hash_image, UserData, create_user, login_user
 
-def hash_image(image_path):
-    img = Image.open(image_path)
-    img = img.convert("RGB")  # Convert to RGB if not already
-    img = img.resize((8, 8))  # Resize to 8x8 for hashing
-    img_data = img.getdata()
-    hash_str = ''.join(['1' if r > 128 else '0' for r, g, b in img_data])
-    return hashlib.md5(hash_str.encode()).hexdigest()
-
-class UserData(Enum):
-    name = "hamza"
-    user_name = "hamzatest"
-    email = "hamzatestuser@gmail.com"
-    password = "Hamza@100"
-    
-def create_user(model):
-    return model.post("users/", json={"name": UserData.name.value, "user_name": UserData.user_name.value, "email": UserData.email.value,"password": UserData.password.value})
-
-def login_user(model):
-    return model.post("/login", data={"username": UserData.email.value, "password": UserData.password.value})
-
+@pytest.mark.order(1)
 def test_create_user(client):
     response = create_user(client)
     assert response.status_code == 201
@@ -35,6 +15,7 @@ def test_create_user(client):
     assert response.json().get("user_name") == UserData.user_name.value
     assert create_user(client).status_code == 409
 
+@pytest.mark.order(2)
 def test_all_users(client):
     response = client.get("/users/")
     assert response.status_code == 200
@@ -44,8 +25,8 @@ def test_all_users(client):
     response = client.get("/users/")
     assert response.status_code == 200
     schemas.UserOut(**response.json()[0])
-
     
+@pytest.mark.order(3)
 def test_get_user(client):
     response = client.get("users/1")
     assert response.status_code == 404
@@ -57,6 +38,7 @@ def test_get_user(client):
     assert response.status_code == 200
     schemas.UserOut(**response.json())
     
+@pytest.mark.order(4)
 def test_login_user(client):
     response = login_user(client)
     assert response.status_code == 403
@@ -67,6 +49,7 @@ def test_login_user(client):
     data = jwt.decode(response.json().get("access_token"), Oauth2.SECRET_KEY, algorithms=Oauth2.ALGORITHM)
     assert data.get("user_name") == UserData.user_name.value
     
+@pytest.mark.order(5)
 def test_update_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -77,6 +60,7 @@ def test_update_user(client):
     assert response.json().get("user_name") == UserData.user_name.value + "test"
     assert response.json().get("bio") == "testbio"
     
+@pytest.mark.order(6)
 def test_delete_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -87,6 +71,7 @@ def test_delete_user(client):
     response = client.delete("users/", headers=header) 
     assert response.status_code == 403
 
+@pytest.mark.order(7)
 def test_patch_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -97,6 +82,7 @@ def test_patch_user(client):
     assert response.json().get("user_name") == UserData.user_name.value + "test"
     assert response.json().get("bio") == "testbio"
     
+@pytest.mark.order(8)
 def test_search_user(client):
     response = client.get("users/search/" + UserData.user_name.value)
     assert response.status_code == 404
@@ -106,6 +92,7 @@ def test_search_user(client):
     assert response.status_code == 200
     schemas.UserOut(**response.json())
     
+@pytest.mark.order(9)
 def test_follow_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -121,6 +108,7 @@ def test_follow_user(client):
     assert response.status_code == 200
     assert response.json().get("following") == 1
     
+@pytest.mark.order(10)
 def test_unfollow_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -138,6 +126,7 @@ def test_unfollow_user(client):
     assert response.status_code == 200
     assert response.json().get("following") == 0
     
+@pytest.mark.order(11)
 def test_following_list(client):
     response = client.get("users/following-list/1")
     assert response.status_code == 200
@@ -154,6 +143,7 @@ def test_following_list(client):
     assert response.status_code == 200
     schemas.FollowList(**(response.json()[0]))
     
+@pytest.mark.order(12)
 def test_follower_list(client):
     response = client.get("users/follower-list/2")
     assert response.status_code == 200
@@ -170,6 +160,7 @@ def test_follower_list(client):
     assert response.status_code == 200
     schemas.FollowList(**(response.json()[0]))
     
+@pytest.mark.order(13)
 def test_change_password(client):
     create_user(client)
     tokens = login_user(client)
@@ -183,7 +174,8 @@ def test_change_password(client):
     # by waiting for 1 sec
     
     assert client.post("/login", data={"username": UserData.email.value, "password": UserData.password.value + "1"}).status_code == 200
-    
+
+@pytest.mark.order(14)
 def test_image_upload(client):
     create_user(client)
     tokens = login_user(client)
