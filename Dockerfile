@@ -23,19 +23,13 @@ RUN python -m venv /opt/venv && \
 COPY . .
 
 # Set environment variables (use defaults or adjust as needed)
-ENV DB=postgresql 
-ENV DB_PASSWORD=jKCsgcjbVthpaPnwCMUUddEGCLiWyrAb 
-ENV DB_HOST=junction.proxy.rlwy.net 
-ENV DB_PORT=44205 
-ENV DB_NAME=railway 
-ENV SECRET_KEY=77cfbtdl757pu7n526qng21g4ib3?2yy8n9dvj3arn4x52j183jyjunlrxcds6r6 
-ENV ALGORITHM=HS256 
-ENV ACCESS_TOKEN_EXPIRE_MINUTES=30 
-ENV REFRESH_TOKEN_EXPIRE_MINUTES=43200 
 ENV PATH="/opt/venv/bin:$PATH"
+# make sure to write the correct name of postgres container
+ENV DB_HOST="postgres-db"
+ENV DB_PORT=5432 
 
 # Expose the port the app runs on
 EXPOSE 8000
 
 # Command to run the app
-CMD python3 app.py
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
