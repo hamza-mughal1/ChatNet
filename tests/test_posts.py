@@ -98,6 +98,7 @@ def test_dislike_post(client):
     schemas.PostOut(**(response.json()))
     assert response.json().get("likes") == 0
     
+@pytest.mark.order(21)
 def test_likes_list(client):
     response = client.get("posts/likes-list/1")
     assert response.status_code == 200
