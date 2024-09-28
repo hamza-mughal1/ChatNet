@@ -1,0 +1,25 @@
+
+services:
+  postgres-db:
+    image: postgres 
+    restart: always
+    environment:
+      POSTGRES_DB: ${db_name}
+      POSTGRES_USER: ${db_username}
+      POSTGRES_PASSWORD: ${db_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${db_username} -d ${db_name}"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s 
+
+  app:
+    build:
+      context: .
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "8000:8000"
