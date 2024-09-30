@@ -113,5 +113,16 @@ def test_likes_list(client):
     assert response.status_code == 200
     schemas.LikesList(**(response.json()[0]))
     
-    
-    
+@pytest.mark.order(22)
+def test_user_likes_list(client):
+    create_user(client)
+    tokens = login_user(client)
+    header = {"Authorization": "Bearer " + tokens.json().get("access_token")}
+    response = client.get("/users/likes-list/", headers=header)
+    assert response.status_code == 200
+    assert response.json() == []
+    create_post(client, tokens=tokens)
+    client.post("posts/like/1", headers=header)
+    response = client.get("/users/likes-list/", headers=header)
+    assert response.status_code == 200
+    schemas.LikesList(**(response.json()[0]))
