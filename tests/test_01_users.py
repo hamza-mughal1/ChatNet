@@ -72,7 +72,7 @@ def test_logout_user(client):
     response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header)
     assert response.status_code == 403
     
-@pytest.mark.order(6)
+@pytest.mark.order(7)
 def test_logout_all_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -92,7 +92,7 @@ def test_logout_all_user(client):
     response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header)
     assert response.status_code == 403
     
-@pytest.mark.order(6)
+@pytest.mark.order(8)
 def test_delete_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -103,7 +103,7 @@ def test_delete_user(client):
     response = client.delete("users/", headers=header) 
     assert response.status_code == 403
 
-@pytest.mark.order(7)
+@pytest.mark.order(9)
 def test_patch_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -114,7 +114,7 @@ def test_patch_user(client):
     assert response.json().get("user_name") == UserData.user_name.value + "test"
     assert response.json().get("bio") == "testbio"
     
-@pytest.mark.order(8)
+@pytest.mark.order(10)
 def test_search_user(client):
     response = client.get("users/search/" + UserData.user_name.value)
     assert response.status_code == 404
@@ -124,7 +124,7 @@ def test_search_user(client):
     assert response.status_code == 200
     schemas.UserOut(**response.json())
     
-@pytest.mark.order(9)
+@pytest.mark.order(11)
 def test_follow_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -140,7 +140,7 @@ def test_follow_user(client):
     assert response.status_code == 200
     assert response.json().get("following") == 1
     
-@pytest.mark.order(10)
+@pytest.mark.order(12)
 def test_unfollow_user(client):
     create_user(client)
     tokens = login_user(client)
@@ -158,7 +158,7 @@ def test_unfollow_user(client):
     assert response.status_code == 200
     assert response.json().get("following") == 0
     
-@pytest.mark.order(11)
+@pytest.mark.order(13)
 def test_following_list(client):
     response = client.get("users/following-list/1")
     assert response.status_code == 200
@@ -175,7 +175,7 @@ def test_following_list(client):
     assert response.status_code == 200
     schemas.FollowList(**(response.json()[0]))
     
-@pytest.mark.order(12)
+@pytest.mark.order(14)
 def test_follower_list(client):
     response = client.get("users/follower-list/2")
     assert response.status_code == 200
@@ -192,7 +192,7 @@ def test_follower_list(client):
     assert response.status_code == 200
     schemas.FollowList(**(response.json()[0]))
     
-@pytest.mark.order(13)
+@pytest.mark.order(15)
 def test_change_password(client):
     create_user(client)
     tokens = login_user(client)
@@ -207,7 +207,7 @@ def test_change_password(client):
     
     assert client.post("/login", data={"username": UserData.email.value, "password": UserData.password.value + "1"}).status_code == 200
 
-@pytest.mark.order(14)
+@pytest.mark.order(16)
 def test_image_upload(client):
     create_user(client)
     tokens = login_user(client)
