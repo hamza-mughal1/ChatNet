@@ -4,6 +4,7 @@ from PIL import Image
 
 TITLE = "THIS IS SOME TITLE"
 CONTENT = "THIS IS SOME CONTENT"
+COMMENT_CONTENT = "THIS IS SOME COMMENT"
 
 class UserData(Enum):
     name = "hamza"
