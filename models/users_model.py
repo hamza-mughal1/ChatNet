@@ -63,8 +63,7 @@ class UsersModel():
         return UsersModel.dict_with_follow(db, user, request)
     
     def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data, request):
-        user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
-        if not user:
+        if (user := db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()) is None:
             raise HTTPException(status_code=404, detail="User not found")
         
         try:
