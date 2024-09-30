@@ -49,6 +49,38 @@ def test_login_user(client):
     data = jwt.decode(response.json().get("access_token"), Oauth2.SECRET_KEY, algorithms=Oauth2.ALGORITHM)
     assert data.get("user_name") == UserData.user_name.value
     
+@pytest.mark.order(6)
+def test_logout_user(client):
+    create_user(client)
+    tokens = login_user(client)
+    header_logout = {"Authorization": "Bearer " + tokens.json().get("access_token"), "Refresh-token": tokens.json().get("refresh_token")}
+    header = {"Authorization": "Bearer " + tokens.json().get("access_token")}
+    response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header) 
+    assert response.status_code == 200
+    client.post("logout", headers=header_logout)
+    response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header)
+    assert response.status_code == 403
+    
+@pytest.mark.order(6)
+def test_logout_all_user(client):
+    create_user(client)
+    tokens = login_user(client)
+    time.sleep(1)
+    tokens2 = login_user(client)
+    header_logout = {"Authorization": "Bearer " + tokens.json().get("access_token"), "Refresh-token": tokens.json().get("refresh_token")}
+    header = {"Authorization": "Bearer " + tokens.json().get("access_token")}
+    header2 = {"Authorization": "Bearer " + tokens2.json().get("access_token")}
+    
+    client.post("logout-all", headers=header_logout)
+    response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header)
+    assert response.status_code == 403
+    
+    response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header2)
+    assert response.status_code == 403
+    
+    response = client.put("users/", json={"name": UserData.name.value + "test", "bio": "testbio", "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value}, headers=header)
+    assert response.status_code == 403
+    
 @pytest.mark.order(5)
 def test_update_user(client):
     create_user(client)
