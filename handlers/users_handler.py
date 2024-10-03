@@ -32,7 +32,7 @@ def delete_user(db :  db_dependency, request: Request, token_data: dict = Depend
 def patch_user(db:  db_dependency, user_data: schemas.UpdateUserPatch, request: Request, token_data: dict = Depends(verify_token)):
     return users_model.patch_user(db, user_data, token_data, request)
 
-@router.get("/search/{user_name}", response_model=schemas.UserOut)
+@router.get("/search/{user_name}", response_model=List[schemas.UserOut])
 def search_user_by_user_name(db:  db_dependency, user_name: str, request: Request):
     return users_model.search_by_user_name(db, user_name, request)
 

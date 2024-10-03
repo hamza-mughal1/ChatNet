@@ -117,12 +117,14 @@ def test_patch_user(client):
 @pytest.mark.order(10)
 def test_search_user(client):
     response = client.get("users/search/" + UserData.user_name.value)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json() == []
     
     create_user(client)
-    response = client.get("users/search/" + UserData.user_name.value)
+    response = client.get("users/search/" + UserData.user_name.value[:-3])
     assert response.status_code == 200
-    schemas.UserOut(**response.json())
+    schemas.UserOut(**(response.json()[0]))
+    assert response.json()[0].get("user_name") == UserData.user_name.value
     
 @pytest.mark.order(11)
 def test_follow_user(client):

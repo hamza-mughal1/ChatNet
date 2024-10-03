@@ -122,10 +122,7 @@ class UsersModel():
         return UsersModel.dict_with_follow(db, user, request)
     
     def search_by_user_name(self, db: utils.db_dependency, user_name, request):
-        if (user := db.query(DbUserModel).filter(DbUserModel.user_name == user_name).first()) is None:
-            raise HTTPException(status_code=404, detail="user not found")
-    
-        return UsersModel.dict_with_follow(db, user, request)
+        return [UsersModel.dict_with_follow(db, i, request) for i in db.query(DbUserModel).filter(DbUserModel.user_name.ilike(f"%{user_name}%")).all()] 
     
     def follow_user(self, db: utils.db_dependency, user_id, token_data, request):
         if user_id == token_data["user_id"]:
