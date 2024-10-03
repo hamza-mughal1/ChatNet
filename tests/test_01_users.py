@@ -140,7 +140,7 @@ def test_follow_user(client):
     id = user.json().get("id")
     response = client.post(f"users/follow/{id}", headers=header)
     assert response.status_code == 200
-    assert response.json().get("following") == 1
+    assert response.json().get("followers") == 1
     
 @pytest.mark.order(12)
 def test_unfollow_user(client):
@@ -155,10 +155,10 @@ def test_unfollow_user(client):
     user = client.post("users/", json={"name": UserData.name.value, "user_name": UserData.user_name.value + "test", "email": "test" + UserData.email.value,"password": UserData.password.value})
     id = user.json().get("id")
     response = client.post(f"users/follow/{id}", headers=header)
-    assert response.json().get("following") == 1
+    assert response.json().get("followers") == 1
     response = client.post(f"users/unfollow/{id}", headers=header)
     assert response.status_code == 200
-    assert response.json().get("following") == 0
+    assert response.json().get("followers") == 0
     
 @pytest.mark.order(13)
 def test_following_list(client):
