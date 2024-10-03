@@ -32,10 +32,12 @@ class Posts(Base):
     content = Column(String(300), nullable=False)
     image = Column(String(300), server_default="None")
     created_at = Column(DateTime, server_default=func.now())
+    likes = Column(Integer, nullable=False, server_default="0")
+    comments = Column(Integer, nullable=False, server_default="0")
 
     user = relationship("Users", back_populates="posts")
-    comments = relationship("Comments", back_populates="post", cascade="all, delete-orphan")
-    likes = relationship("Likes", back_populates="post", cascade="all, delete-orphan")
+    comments_relation = relationship("Comments", back_populates="post", cascade="all, delete-orphan")
+    likes_relation = relationship("Likes", back_populates="post", cascade="all, delete-orphan")
 
 
 class Comments(Base):
@@ -47,7 +49,7 @@ class Comments(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("Users", back_populates="comments")
-    post = relationship("Posts", back_populates="comments")
+    post = relationship("Posts", back_populates="comments_relation")
 
 
 class Follows(Base):
@@ -68,7 +70,7 @@ class Likes(Base):
     created_at = Column(DateTime, server_default=func.now()) 
 
     user = relationship("Users", back_populates="likes")
-    post = relationship("Posts", back_populates="likes")
+    post = relationship("Posts", back_populates="likes_relation")
 
 class AccessTokens(Base):
     __tablename__ = "access_tokens"
