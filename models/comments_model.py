@@ -7,10 +7,11 @@ class CommentsModel():
         pass
 
     def comment_on_post(self, db: utils.db_dependency, id, comment, token_data):
-        if (db.query(DbPostModel).filter(DbPostModel.id == id).first()) is None:
+        if (post := db.query(DbPostModel).filter(DbPostModel.id == id).first()) is None:
             raise HTTPException(status_code=404, detail="Post not found")
         new_comment = Comments(user_id=token_data["user_id"], post_id=id, content=comment.content)
         db.add(new_comment)
+        post.comments += 1
         db.commit()
         dic = utils.orm_to_dict(new_comment)
         dic.update({"user_name":token_data["user_name"]})
@@ -38,8 +39,11 @@ class CommentsModel():
         
         if comment.user_id != token_data["user_id"]:
             raise HTTPException(status_code=403, detail="Access denied. (Don't have ownership)")
+        
+        post = db.query(DbPostModel).filter(DbPostModel.id == comment.post_id).first()
 
         db.delete(comment)
+        post.comments -= 1
         db.commit()
         comment = utils.orm_to_dict(comment)
         comment.update({"user_name":token_data["user_name"]})
