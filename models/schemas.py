@@ -23,7 +23,7 @@ class UserOut(BaseModel):
     name: str
     user_name: str
     followers: int
-    following: int
+    followings: int
     bio: str
     profile_pic: str
     created_at: datetime
