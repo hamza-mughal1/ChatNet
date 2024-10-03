@@ -13,15 +13,16 @@ class Users(Base):
     bio = Column(String(300), server_default="None")
     profile_pic = Column(String(300), server_default="None")
     created_at = Column(DateTime, server_default=func.now())
+    followers = Column(Integer, nullable=False, server_default="0")
+    followings = Column(Integer, nullable=False, server_default="0")
 
     posts = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
     likes = relationship("Likes", back_populates="user", cascade="all, delete-orphan")
     access_token = relationship("AccessTokens", back_populates="user", cascade="all, delete-orphan")
     refresh_token = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
-    following = relationship("Follows", foreign_keys="[Follows.follower_id]", back_populates="follower", cascade="all, delete-orphan")
-    followers = relationship("Follows", foreign_keys="[Follows.following_id]", back_populates="following", cascade="all, delete-orphan")
-
+    following_relation = relationship("Follows", foreign_keys="[Follows.follower_id]", back_populates="follower", cascade="all, delete-orphan")
+    followers_relation = relationship("Follows", foreign_keys="[Follows.following_id]", back_populates="following", cascade="all, delete-orphan")
 
 class Posts(Base):
     __tablename__ = "posts"
@@ -56,8 +57,8 @@ class Follows(Base):
     following_id = Column(Integer, ForeignKey('users.id'))
     created_at = Column(DateTime, server_default=func.now())
 
-    follower = relationship("Users", foreign_keys=[follower_id], back_populates="following")
-    following = relationship("Users", foreign_keys=[following_id], back_populates="followers")
+    follower = relationship("Users", foreign_keys=[follower_id], back_populates="following_relation")
+    following = relationship("Users", foreign_keys=[following_id], back_populates="followers_relation")
 
 class Likes(Base):
     __tablename__ = "likes"
