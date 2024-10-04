@@ -7,6 +7,9 @@ class EnvSetting(BaseSettings):
     db_password: str
     db_host: str = "localhost"
     db_port: int = 5432
+    redis_host: str
+    redis_port: int
+    redis_db: str
     test_db_port: int
     secret_key: str
     algorithm: str = "HS256"
