@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from models.database_orm import get_db
 from sqlalchemy.inspection import inspect
+from models.redis_setup import get_rds
+from redis import Redis
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -14,6 +16,7 @@ def verify_password(password, hashed_password):
     return pwd_context.verify(password, hashed_password)
 
 db_dependency = Annotated[Session, Depends(get_db)]
+rds_dependency = Annotated[Redis, Depends(get_rds)]
 
 def orm_to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
