@@ -7,6 +7,8 @@ from PIL import Image #type:ignore
 from io import BytesIO
 import os
 from handlers import posts_handler
+import json
+import pickle
 
 class PostsModel():
     get_post_func_name = "get_post_image"
@@ -137,14 +139,21 @@ class PostsModel():
 
         return PostsModel.get_post(self, db, post_id, request)
     
-    def post_likes_list(self, db: utils.db_dependency, post_id):
+    def post_likes_list(self, db: utils.db_dependency, post_id, rds):
+        rds_parameter = f"post_likes_list_of_id_{post_id}"
+        cache = rds.get(rds_parameter)
+        if cache:
+            return pickle.loads(cache)
+        
         l = []
         for i in db.query(Likes).filter(Likes.post_id == post_id).all():
             dic = utils.orm_to_dict(i)
             user_name = db.query(Users).filter(Users.id == i.user_id).first().user_name
             dic.update({"user_name":user_name})
             l.append(dic)
-
+            
+        # cache is set for 2 minutes (2 seconds * by 60 = 2 minutes)
+        rds.setex(rds_parameter, 2 * 60, pickle.dumps(l))
         return l
 
 

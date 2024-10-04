@@ -35,8 +35,8 @@ def dislike_post_by_post_id(db : utils.db_dependency, id: int, request: Request,
     return posts_model.dislike_post(db, id, token_data, request)
 
 @router.get("/likes-list/{post_id}", response_model=List[schemas.LikesList])
-def follower_list(db: utils.db_dependency, post_id: int):
-    return posts_model.post_likes_list(db, post_id)
+def likes_list(db: utils.db_dependency, rds: utils.rds_dependency, post_id: int):
+    return posts_model.post_likes_list(db, post_id, rds)
 
 @router.get("/post-image/{image_id}")
 async def get_post_image(image_id: str):
