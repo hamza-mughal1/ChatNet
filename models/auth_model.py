@@ -6,13 +6,13 @@ from models import db_models
 import models.Oauth2 as Oauth2
 from typing import Annotated
 from jose import jwt, JWTError
+from utilities.settings import setting
 
 router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/login", response_model=schemas.Token)
-def login(db : utils.db_dependency, user_credentials: OAuth2PasswordRequestForm = Depends()):
-
+def login(db : utils.db_dependency, rds: utils.rds_dependency, user_credentials: OAuth2PasswordRequestForm = Depends()):
     user = db.query(db_models.Users).filter(db_models.Users.email == user_credentials.username).first()
     if not user:
         raise HTTPException(status_code=403, detail="Invalid Credentials")
@@ -29,6 +29,9 @@ def login(db : utils.db_dependency, user_credentials: OAuth2PasswordRequestForm 
     re_token = db_models.RefreshTokens(access_token_id=ac_token.id, user_id=user.id, token=refresh_token)
     db.add(re_token)
     db.commit()
+    
+    # (time * 60) because redis only accepts time in seconds
+    rds.setex(access_token,setting.access_token_expire_minutes*60, access_token)
 
     return {"access_token":access_token, "refresh_token":refresh_token, "token_type":"Bearer"}
 
@@ -79,7 +82,7 @@ def refresh(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_baerer
     
     
 @router.post("/logout")
-def logout_user(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_baerer), refresh_token: Annotated[str | None, Header()] = None):
+def logout_user(db : utils.db_dependency, rds: utils.rds_dependency, token : str = Depends(Oauth2.oauth2_baerer), refresh_token: Annotated[str | None, Header()] = None):
     if refresh_token is None:
         raise HTTPException(status_code=403, detail="unable to find 'Refresh-token' header")
     
@@ -110,13 +113,14 @@ def logout_user(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_ba
     
     db.delete(access_db_model)
     db.commit()
+    rds.delete(token)
 
     return {"messsage": "You have been logged out"}
 
 
    
 @router.post("/logout-all")
-def logout_user(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_baerer), refresh_token: Annotated[str | None, Header()] = None):
+def logout_user(db : utils.db_dependency, rds: utils.rds_dependency, token : str = Depends(Oauth2.oauth2_baerer), refresh_token: Annotated[str | None, Header()] = None):
     if refresh_token is None:
         raise HTTPException(status_code=403, detail="unable to find 'Refresh-token' header")
     
@@ -148,6 +152,7 @@ def logout_user(db : utils.db_dependency, token : str = Depends(Oauth2.oauth2_ba
     acc_tokens = db.query(db_models.AccessTokens).filter(db_models.AccessTokens.user_id == refresh_db_model.user_id).all()
     for i in acc_tokens:
         db.delete(i)
+        rds.delete(i.token)
     db.commit()
 
     return {"messsage": "You have been logged out from all logins"}

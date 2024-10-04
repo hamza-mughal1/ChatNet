@@ -2,7 +2,7 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from utilities.utils import db_dependency
+from utilities.utils import db_dependency, rds_dependency
 from models.db_models import Users, AccessTokens
 from utilities.settings import setting
 
@@ -25,8 +25,11 @@ def create_token(data: dict, refresh=False):
 
     return ecoded_token
 
-def verify_token(db :  db_dependency, token : str = Depends(oauth2_baerer)):
-    if db.query(AccessTokens).filter(AccessTokens.token == token).first() is None:
+def verify_token(db :  db_dependency, rds: rds_dependency, token : str = Depends(oauth2_baerer)):
+    cache = rds.get(token)
+    if cache:
+        pass 
+    elif db.query(AccessTokens).filter(AccessTokens.token == token).first() is None:
         raise HTTPException(status_code=403, detail="token is invalid", headers = {"WWW-Authenticate":"Bearer"})
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
