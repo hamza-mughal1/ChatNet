@@ -2,7 +2,6 @@ from models import schemas
 from tests.testing_database_setup import client
 from jose import jwt
 from models import Oauth2
-import time
 from io import BytesIO
 import pytest
 from tests.utils import hash_image, UserData, create_user, login_user
@@ -76,7 +75,7 @@ def test_logout_user(client):
 def test_logout_all_user(client):
     create_user(client)
     tokens = login_user(client)
-    time.sleep(1)
+
     tokens2 = login_user(client)
     header_logout = {"Authorization": "Bearer " + tokens.json().get("access_token"), "Refresh-token": tokens.json().get("refresh_token")}
     header = {"Authorization": "Bearer " + tokens.json().get("access_token")}
@@ -203,9 +202,6 @@ def test_change_password(client):
     
     assert response.status_code == 200
     schemas.UserOut(**response.json())
-    
-    time.sleep(1) # to avoid generating same JWT (if the same information passed in two JWT then they both will be same) that's why it will change the exp time
-    # by waiting for 1 sec
     
     assert client.post("/login", data={"username": UserData.email.value, "password": UserData.password.value + "1"}).status_code == 200
 
