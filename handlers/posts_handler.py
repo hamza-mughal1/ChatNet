@@ -19,20 +19,20 @@ async def create_post(db: utils.db_dependency, request: Request, title: Annotate
     return await posts_model.create_post(db, title, content, image, token_data, request)
 
 @router.get("/{id}", response_model=schemas.PostOut)
-def get_post(db : utils.db_dependency, id: int, request: Request):
-    return posts_model.get_post(db, id, request)
+def get_post(db : utils.db_dependency, rds: utils.rds_dependency, id: int, request: Request):
+    return posts_model.get_post(db, id, request, rds)
 
 @router.delete("/{id}", response_model=schemas.PostOut)
 def delete_post(db : utils.db_dependency, id: int, request: Request, token_data: dict = Depends(verify_token)):
     return posts_model.delete_post(db, id, token_data, request)
 
 @router.post("/like/{id}", response_model=schemas.PostOut)
-def like_post_by_post_id(db : utils.db_dependency, id: int, request: Request, token_data: dict = Depends(verify_token)):
-    return posts_model.like_post(db, id, token_data, request)
+def like_post_by_post_id(db : utils.db_dependency, rds: utils.rds_dependency, id: int, request: Request, token_data: dict = Depends(verify_token)):
+    return posts_model.like_post(db, id, token_data, request, rds)
 
 @router.post("/dislike/{id}", response_model=schemas.PostOut)
-def dislike_post_by_post_id(db : utils.db_dependency, id: int, request: Request, token_data: dict = Depends(verify_token)):
-    return posts_model.dislike_post(db, id, token_data, request)
+def dislike_post_by_post_id(db : utils.db_dependency, id: int, rds: utils.rds_dependency, request: Request, token_data: dict = Depends(verify_token)):
+    return posts_model.dislike_post(db, id, token_data, request, rds)
 
 @router.get("/likes-list/{post_id}", response_model=List[schemas.LikesList])
 def likes_list(db: utils.db_dependency, rds: utils.rds_dependency, post_id: int):
