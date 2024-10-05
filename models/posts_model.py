@@ -83,12 +83,22 @@ class PostsModel():
         return PostsModel.create_dict(final_post, request)
     
         
-    def get_post(self, db: utils.db_dependency, id, request):
+    def get_post(self, db: utils.db_dependency, id, request, rds, update_cache=False):
+        rds_parameter = f"get_post_by_id_{id}"
+        cache = rds.get(rds_parameter)
+        if cache and update_cache is False:
+            return pickle.loads(cache)
+        
+        
         post = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).filter(DbPostModel.id == id).first()
         if not post:
             raise HTTPException(status_code=404, detail="No post found")
         
-        return PostsModel.create_dict(post, request)
+        dic = PostsModel.create_dict(post, request)
+        
+        # cache is set for 3 minutes (3 seconds * by 60 = 3 minutes)
+        rds.setex(rds_parameter, 3 * 60, pickle.dumps(dic))
+        return dic
     
     def delete_post(self, db: utils.db_dependency, id, token_data, request):
         post = db.query(DbPostModel).filter(DbPostModel.id == id).first()
@@ -111,12 +121,12 @@ class PostsModel():
         
         return returning_post
     
-    def like_post(self, db: utils.db_dependency, post_id, token_data, request):
+    def like_post(self, db: utils.db_dependency, post_id, token_data, request, rds):
         if (post := db.query(DbPostModel).filter(DbPostModel.id == post_id).first()) is None:
             raise HTTPException(status_code=404, detail="post not found")
         
         if db.query(Likes).filter(Likes.user_id == token_data["user_id"]).filter(Likes.post_id == post_id).first() is not None:
-            return PostsModel.get_post(self, db, post_id)
+            return PostsModel.get_post(self, db, post_id, request, rds, update_cache=True)
         
         like = Likes(user_id=token_data["user_id"], post_id=post_id)
         
@@ -124,20 +134,20 @@ class PostsModel():
         db.add(like)
         db.commit()
 
-        return PostsModel.get_post(self, db, post_id, request)
+        return PostsModel.get_post(self, db, post_id, request, rds, update_cache=True)
     
-    def dislike_post(self, db: utils.db_dependency, post_id, token_data, request):
+    def dislike_post(self, db: utils.db_dependency, post_id, token_data, request, rds):
         if (post := db.query(DbPostModel).filter(DbPostModel.id == post_id).first()) is None:
             raise HTTPException(status_code=404, detail="post not found")
         
         if (like := db.query(Likes).filter(Likes.user_id == token_data["user_id"]).filter(Likes.post_id == post_id).first()) is None:
-            return PostsModel.get_post(self, db, post_id)
+            return PostsModel.get_post(self, db, post_id, rds, update_cache=True)
 
         post.likes -= 1
         db.delete(like)
         db.commit()
 
-        return PostsModel.get_post(self, db, post_id, request)
+        return PostsModel.get_post(self, db, post_id, request, rds, update_cache=True)
     
     def post_likes_list(self, db: utils.db_dependency, post_id, rds):
         rds_parameter = f"post_likes_list_of_id_{post_id}"
@@ -152,8 +162,8 @@ class PostsModel():
             dic.update({"user_name":user_name})
             l.append(dic)
             
-        # cache is set for 2 minutes (2 seconds * by 60 = 2 minutes)
-        rds.setex(rds_parameter, 2 * 60, pickle.dumps(l))
+        # cache is set for 5 sec for more frequent update
+        rds.setex(rds_parameter, 5, pickle.dumps(l))
         return l
 
 
