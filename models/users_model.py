@@ -9,6 +9,7 @@ from io import BytesIO
 from PIL import Image #type:ignore
 from datetime import datetime
 import os
+import pickle
 
 class UsersModel():
     get_profile_picture_func_name = "get_profile_picture"
@@ -54,13 +55,26 @@ class UsersModel():
         db.commit()
         return UsersModel.user_pre_processing_for_urls( user, request)
     
-    def get_user(self, db: utils.db_dependency, id, request):
+    def get_user(self, db: utils.db_dependency, id, request, rds, update_cache=False):
+        rds_parameter = f"get_user_by_id_{id}"
+        cache = rds.get(rds_parameter)
+        if cache and update_cache is False:
+            # print("CACHE HIT: PASS")
+            return pickle.loads(cache)
+        
+        # print("CACHE HIT: MISS")
+        
         if (user := db.query(DbUserModel).filter(DbUserModel.id == id).first()) is None:
             raise HTTPException(status_code=404, detail="user not found")
+        
+        response = UsersModel.user_pre_processing_for_urls( user, request)
+            
+        # cache is set for 3 minutes (3 seconds * by 60 = 3 minutes)
+        rds.setex(rds_parameter, 3 * 60, pickle.dumps(response))
+            
+        return response 
     
-        return UsersModel.user_pre_processing_for_urls( user, request)
-    
-    def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data, request):
+    def update_user(self, db: utils.db_dependency, user_data: schemas.UpdateUser, token_data, request, rds):
         if (user := db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()) is None:
             raise HTTPException(status_code=404, detail="User not found")
         
@@ -77,9 +91,12 @@ class UsersModel():
                 error_field = "{some-field}"
             raise HTTPException(status_code=409, detail=f"{error_field} already exists")
     
+        rds.delete(token_data["token"])
+        rds.delete(f"get_user_by_id_{token_data['user_id']}")
+    
         return UsersModel.user_pre_processing_for_urls( user, request)
     
-    def patch_user(self, db: utils.db_dependency, user_data: schemas.UpdateUserPatch, token_data, request):
+    def patch_user(self, db: utils.db_dependency, user_data: schemas.UpdateUserPatch, token_data, request, rds):
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -102,9 +119,12 @@ class UsersModel():
                     error_field = "{some-field}"
                 raise HTTPException(status_code=409, detail=f"{error_field} already exists")
         
+        rds.delete(token_data["token"])
+        rds.delete(f"get_user_by_id_{token_data['user_id']}")
+        
         return UsersModel.user_pre_processing_for_urls( user, request)
     
-    def delete_user(self, db: utils.db_dependency, token_data, request):
+    def delete_user(self, db: utils.db_dependency, token_data, request, rds):
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -116,20 +136,22 @@ class UsersModel():
         db.delete(user)
         db.commit()
 
+        rds.delete(token_data["token"])
+        rds.delete(f"get_user_by_id_{token_data['user_id']}")
 
         return UsersModel.user_pre_processing_for_urls( user, request)
     
     def search_by_user_name(self, db: utils.db_dependency, user_name, request):
         return [UsersModel.user_pre_processing_for_urls( i, request) for i in db.query(DbUserModel).filter(DbUserModel.user_name.ilike(f"%{user_name}%")).all()] 
     
-    def follow_user(self, db: utils.db_dependency, user_id, token_data, request):
+    def follow_user(self, db: utils.db_dependency, user_id, token_data, request, rds):
         if user_id == token_data["user_id"]:
             raise HTTPException(status_code=400, detail="Not allowed to follow yourself")
         if (second_user := db.query(DbUserModel).filter(DbUserModel.id == user_id).first()) is None:
             raise HTTPException(status_code=404, detail="user not found")
         
         if db.query(Follows).filter(Follows.follower_id == token_data["user_id"]).filter(Follows.following_id == user_id).first() is not None:
-            return UsersModel.get_user(self, db, user_id, request)
+            return UsersModel.get_user(self, db, user_id, request, rds, update_cache=True)
         
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first() 
         user.followings += 1
@@ -139,9 +161,9 @@ class UsersModel():
         db.add(follow)
         db.commit()
 
-        return UsersModel.get_user(self, db, user_id, request)
+        return UsersModel.get_user(self, db, user_id, request, rds, update_cache=True)
     
-    def unfollow_user(self, db: utils.db_dependency, user_id, token_data, request):
+    def unfollow_user(self, db: utils.db_dependency, user_id, token_data, request, rds):
         if user_id == token_data["user_id"]:
             raise HTTPException(status_code=400, detail="Not allowed to unfollow yourself")
         
@@ -149,7 +171,7 @@ class UsersModel():
             raise HTTPException(status_code=404, detail="user not found")
         
         if (follow := db.query(Follows).filter(Follows.follower_id == token_data["user_id"]).filter(Follows.following_id == user_id).first()) is None:
-            return UsersModel.get_user(self, db, user_id, request)
+            return UsersModel.get_user(self, db, user_id, request, rds, update_cache=True)
         
         user = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first() 
         
@@ -159,7 +181,7 @@ class UsersModel():
         db.delete(follow)
         db.commit()
 
-        return UsersModel.get_user(self, db, user_id, request)
+        return UsersModel.get_user(self, db, user_id, request, rds, update_cache=True)
     
     def following_list(self, db: utils.db_dependency, user_id):
         l = []
@@ -183,7 +205,7 @@ class UsersModel():
 
         return l
     
-    def change_password(self, db: utils.db_dependency, details: schemas.ChangePassword, token_data, request):
+    def change_password(self, db: utils.db_dependency, details: schemas.ChangePassword, token_data, request, rds):
         result = db.query(DbUserModel).filter(DbUserModel.id == token_data["user_id"]).first()
         db_email = result.email
         db_pass = result.password
@@ -196,8 +218,10 @@ class UsersModel():
         
         result.password = utils.create_hashed_password(details.new_password)
         db.commit()
+        
+        rds.delete(token_data["token"])
 
-        return UsersModel.get_user(self, db, token_data["user_id"], request)
+        return UsersModel.get_user(self, db, token_data["user_id"], request, rds, update_cache=True)
     
     def post_likes_list_by_user(self, db: utils.db_dependency, token_data):
         l = []
@@ -208,7 +232,7 @@ class UsersModel():
 
         return l
     
-    async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data, request):
+    async def upload_profile_pic(self, db: utils.db_dependency, file: UploadFile, token_data, request, rds):
         if file.content_type.split("/")[1] not in self.allowed_profile_image_type:
             raise HTTPException(status_code=400, detail=f"only {self.allowed_profile_image_type} types are allowed")
         
@@ -230,7 +254,7 @@ class UsersModel():
         
         user.profile_pic = final_unique_name
         db.commit()
-        return UsersModel.get_user(self, db, user.id, request)
+        return UsersModel.get_user(self, db, user.id, request, rds, update_cache=True)
     
     async def get_profile_pic(self, profile_pic_id: str):
         path = self.PROFILE_PIC_DIR + profile_pic_id
