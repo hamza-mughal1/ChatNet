@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from utilities.utils import db_dependency, rds_dependency
 from models.db_models import Users, AccessTokens
 from utilities.settings import setting
+import uuid
 
 SECRET_KEY = setting.secret_key
 ALGORITHM = setting.algorithm
@@ -20,6 +21,7 @@ def create_token(data: dict, refresh=False):
     else:
         expiration = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp":round(expiration.timestamp())})
+    to_encode.update({"uuid": str(uuid.uuid4())})
 
     ecoded_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
