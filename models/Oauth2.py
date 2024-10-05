@@ -57,7 +57,7 @@ def verify_token(db :  db_dependency, rds: rds_dependency, token : str = Depends
         if (user := db.query(Users).filter(Users.id == user_id).first()) is None:
             raise HTTPException(status_code=403, detail="Invalid token. (User not found)", headers = {"WWW-Authenticate":"Bearer"})
         
-        payload.update({"user_name": user.user_name})
+        payload.update({"user_name": user.user_name, "token": token})
     
     except JWTError:
         raise HTTPException(status_code=403, detail="token is invalid", headers={"WWW-Authenticate":"Bearer"})
