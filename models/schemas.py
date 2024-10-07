@@ -31,6 +31,14 @@ class UserOut(BaseModel):
     class Config:
         from_attributes = True
 
+class SearchUsers(BaseModel):
+    id: int
+    user_name: str
+    profile_pic: str
+
+    class Config:
+        from_attributes = True
+
 class CreateUser(BaseModel):
     name: str
     user_name: str
