@@ -11,8 +11,10 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 posts_model = PostsModel()
 
 @router.get("/", response_model=List[schemas.PostOut])
-def all_posts(db : utils.db_dependency, request: Request):
-    return posts_model.get_all_posts(db, request)
+def all_posts(db : utils.db_dependency, request: Request, rds: utils.rds_dependency, page: int = 1):
+    if page < 1:
+        page = 1
+    return posts_model.get_all_posts(db, request, page=page, rds=rds)
 
 @router.post("/", response_model=schemas.PostOut, status_code=201)
 async def create_post(db: utils.db_dependency, request: Request, title: Annotated[str, Form()], content: Annotated[str, Form()], image: Annotated[UploadFile, Form()] = None, token_data: dict = Depends(verify_token)):
@@ -35,8 +37,10 @@ def dislike_post_by_post_id(db : utils.db_dependency, id: int, rds: utils.rds_de
     return posts_model.dislike_post(db, id, token_data, request, rds)
 
 @router.get("/likes-list/{post_id}", response_model=List[schemas.LikesList])
-def likes_list(db: utils.db_dependency, rds: utils.rds_dependency, post_id: int):
-    return posts_model.post_likes_list(db, post_id, rds)
+def likes_list(db: utils.db_dependency, rds: utils.rds_dependency, post_id: int, page: int = 1):
+    if page < 1:
+        page = 1
+    return posts_model.post_likes_list(db, post_id, rds, page=page)
 
 @router.get("/post-image/{image_id}")
 async def get_post_image(image_id: str):
