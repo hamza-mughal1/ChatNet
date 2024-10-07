@@ -1,10 +1,12 @@
+import pickle
+from sqlalchemy import desc
 import utilities.utils as utils
 from models.db_models import Posts as DbPostModel, Users, Comments
 from fastapi import HTTPException
 
 class CommentsModel():
     def __init__(self):
-        pass
+        self.page_size = 20
 
     def comment_on_post(self, db: utils.db_dependency, id, comment, token_data):
         if (post := db.query(DbPostModel).filter(DbPostModel.id == id).first()) is None:
@@ -18,19 +20,35 @@ class CommentsModel():
         return dic
     
 
-    def get_comment_by_post_id(self, db: utils.db_dependency, id):
+    def get_comment_by_post_id(self, db: utils.db_dependency, id, page, rds):
+        rds_parameter = f"get_comments_by_post_id_{id}_page_{page}"
+        cache = rds.get(rds_parameter)
+        if cache:
+            return pickle.loads(cache)
+        
+        offset_value = (page - 1) * self.page_size
         if db.query(DbPostModel).filter(DbPostModel.id == id).first() is None:
             raise HTTPException(status_code=404, detail="post not found")
         
         
         user_name = None
         l = []
-        for i in db.query(Comments).filter(Comments.post_id == id).all():
+        for i in db.query(Comments)\
+            .filter(Comments.post_id == id)\
+            .order_by(desc(Comments.created_at))\
+            .offset(offset_value)\
+            .limit(self.page_size)\
+            .all():
+                
             dic = utils.orm_to_dict(i)
             if user_name is None:
                 user_name = db.query(Users).filter(Users.id == i.user_id).first().user_name
             dic.update({"user_name":user_name})
             l.append(dic)
+        
+        # cache is set for 1 minute
+        rds.setex(rds_parameter, 60, pickle.dumps(l))    
+        
         return l
     
     def delete_comment(self, db: utils.db_dependency, id, token_data):
