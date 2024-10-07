@@ -67,9 +67,16 @@ class CommentsModel():
         comment.update({"user_name":token_data["user_name"]})
         return comment
     
-    def get_comment_by_user_id(self, db: utils.db_dependency, token_data):
+    def get_comment_by_user_id(self, db: utils.db_dependency, token_data, page):
+        offset_value = (page - 1) * self.page_size
         l = []
-        for i in db.query(Comments).filter(Comments.user_id == token_data["user_id"]).all():
+        for i in db.query(Comments)\
+            .filter(Comments.user_id == token_data["user_id"])\
+            .order_by(desc(Comments.created_at))\
+            .offset(offset_value)\
+            .limit(self.page_size)\
+            .all():
+                
             dic = utils.orm_to_dict(i)
             dic.update({"user_name":token_data["user_name"]})
             l.append(dic)
