@@ -1,3 +1,4 @@
+from sqlalchemy import desc
 import utilities.utils as utils
 from models.db_models import Posts as DbPostModel, Users, Comments, Likes
 from fastapi import HTTPException
@@ -17,7 +18,8 @@ class PostsModel():
     def __init__(self):
         
         self.allowed_post_image_type = ["png", "jpg", "jpeg"]
-        self.image_size = 2
+        self.image_size = 2  # MB (mega byte)
+        self.page_size = 20  # records per page 
 
     @staticmethod
     def get_post_image_url(post, request):
@@ -47,11 +49,26 @@ class PostsModel():
         return dic
 
     
-    def get_all_posts(self, db : utils.db_dependency, request):
-        posts = db.query(DbPostModel, Users).join(Users, DbPostModel.user_id == Users.id).all()
+    def get_all_posts(self, db : utils.db_dependency, request, page, rds):
+        rds_parameter = f"get_posts_page_{page}"
+        cache = rds.get(rds_parameter)
+        if cache:
+            return pickle.loads(cache)
+        
+        offset_value = (page - 1) * self.page_size
+        posts = db.query(DbPostModel, Users)\
+        .join(Users, DbPostModel.user_id == Users.id)\
+        .order_by(desc(DbPostModel.created_at))\
+        .offset(offset_value)\
+        .limit(self.page_size)\
+        .all()
+        
         l = []
         for i in posts:
             l.append(PostsModel.create_dict(i, request))
+
+        # cache is set for 1 minute
+        rds.setex(rds_parameter, 60, pickle.dumps(l))
 
         return l
     
@@ -149,14 +166,21 @@ class PostsModel():
 
         return PostsModel.get_post(self, db, post_id, request, rds, update_cache=True)
     
-    def post_likes_list(self, db: utils.db_dependency, post_id, rds):
-        rds_parameter = f"post_likes_list_of_id_{post_id}"
+    def post_likes_list(self, db: utils.db_dependency, post_id, rds, page):
+        offset_value = (page - 1) * self.page_size
+        rds_parameter = f"post_likes_list_of_id_{post_id}_page_{page}"
         cache = rds.get(rds_parameter)
         if cache:
             return pickle.loads(cache)
         
         l = []
-        for i in db.query(Likes).filter(Likes.post_id == post_id).all():
+        for i in db.query(Likes)\
+            .filter(Likes.post_id == post_id)\
+            .order_by(desc(Likes.created_at))\
+            .offset(offset_value)\
+            .limit(self.page_size)\
+            .all():
+                    
             dic = utils.orm_to_dict(i)
             user_name = db.query(Users).filter(Users.id == i.user_id).first().user_name
             dic.update({"user_name":user_name})
