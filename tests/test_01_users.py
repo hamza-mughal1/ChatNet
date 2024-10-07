@@ -122,7 +122,7 @@ def test_search_user(client):
     create_user(client)
     response = client.get("users/search/" + UserData.user_name.value[:-3])
     assert response.status_code == 200
-    schemas.UserOut(**(response.json()[0]))
+    schemas.SearchUsers(**(response.json()[0]))
     assert response.json()[0].get("user_name") == UserData.user_name.value
     
 @pytest.mark.order(11)
