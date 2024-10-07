@@ -1,3 +1,4 @@
+from sqlalchemy import desc
 from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
 from fastapi import HTTPException, UploadFile
@@ -20,6 +21,7 @@ class UsersModel():
         self.PROFILE_PIC_DIR = os.getcwd() + f"/{picture_folder_name}/"
         self.allowed_profile_image_type = ["png", "jpg", "jpeg"]
         self.max_image_size = 2
+        self.page_size = 20
 
     @staticmethod
     def get_user_profile_url(user, request):
@@ -38,8 +40,26 @@ class UsersModel():
         user.profile_pic = UsersModel.get_user_profile_url(user, request)
         return user
 
-    def get_all_users(self, db : utils.db_dependency, request):    
-        return [UsersModel.user_pre_processing_for_urls( i, request) for i in (db.query(DbUserModel).all())] 
+    def get_all_users(self, db: utils.db_dependency, request, page: int, rds):
+        rds_parameter = f"get_users_page_{page}"
+        cache = rds.get(rds_parameter)
+        if cache:
+            return pickle.loads(cache)
+        
+        offset_value = (page - 1) * self.page_size
+
+        users = db.query(DbUserModel)\
+                .order_by(desc(DbUserModel.created_at))\
+                .offset(offset_value)\
+                .limit(self.page_size)\
+                .all()
+
+        l = [UsersModel.user_pre_processing_for_urls(user, request) for user in users]
+        
+        # cache is set for 1 minutes
+        rds.setex(rds_parameter, 60, pickle.dumps(l))
+        
+        return l
     
     def create_user(self, user_info, db: utils.db_dependency, request):
         if db.query(DbUserModel).filter(DbUserModel.user_name == user_info.user_name).first():
@@ -142,7 +162,8 @@ class UsersModel():
         return UsersModel.user_pre_processing_for_urls( user, request)
     
     def search_by_user_name(self, db: utils.db_dependency, user_name, request):
-        return [UsersModel.user_pre_processing_for_urls( i, request) for i in db.query(DbUserModel).filter(DbUserModel.user_name.ilike(f"%{user_name}%")).all()] 
+        query = db.query(DbUserModel).filter(DbUserModel.user_name.ilike(f"%{user_name}%")).limit(10).all()
+        return [UsersModel.user_pre_processing_for_urls( i, request) for i in query] 
     
     def follow_user(self, db: utils.db_dependency, user_id, token_data, request, rds):
         if user_id == token_data["user_id"]:
@@ -183,9 +204,16 @@ class UsersModel():
 
         return UsersModel.get_user(self, db, user_id, request, rds, update_cache=True)
     
-    def following_list(self, db: utils.db_dependency, user_id):
+    def following_list(self, db: utils.db_dependency, user_id, page: int):
+        offset_value = (page - 1) * self.page_size
         l = []
-        for i in db.query(Follows).filter(Follows.follower_id == user_id).all():
+        for i in db.query(Follows)\
+            .filter(Follows.follower_id == user_id)\
+            .order_by(desc(Follows.created_at))\
+            .offset(offset_value)\
+            .limit(self.page_size)\
+            .all():
+                
             dic = utils.orm_to_dict(i)
             follower_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.follower_id).first().user_name
             following_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.following_id).first().user_name
@@ -194,9 +222,16 @@ class UsersModel():
 
         return l
     
-    def follower_list(self, db: utils.db_dependency, user_id):
+    def follower_list(self, db: utils.db_dependency, user_id, page):
+        offset_value = (page - 1) * self.page_size
         l = []
-        for i in db.query(Follows).filter(Follows.following_id == user_id).all():
+        for i in db.query(Follows)\
+            .filter(Follows.following_id == user_id)\
+            .order_by(desc(Follows.created_at))\
+            .offset(offset_value)\
+            .limit(self.page_size)\
+            .all():
+                
             dic = utils.orm_to_dict(i)
             follower_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.follower_id).first().user_name
             following_user_name = db.query(DbUserModel).filter(DbUserModel.id == i.following_id).first().user_name
@@ -223,9 +258,16 @@ class UsersModel():
 
         return UsersModel.get_user(self, db, token_data["user_id"], request, rds, update_cache=True)
     
-    def post_likes_list_by_user(self, db: utils.db_dependency, token_data):
+    def post_likes_list_by_user(self, db: utils.db_dependency, token_data, page):
+        offset_value = (page - 1) * self.page_size
         l = []
-        for i in db.query(Likes).filter(Likes.user_id == token_data["user_id"]).all():
+        for i in db.query(Likes)\
+                .filter(Likes.user_id == token_data["user_id"])\
+                .order_by(desc(Likes.created_at))\
+                .offset(offset_value)\
+                .limit(self.page_size)\
+                .all():
+                    
             dic = utils.orm_to_dict(i)
             dic.update({"user_name":token_data["user_name"]})
             l.append(dic)
