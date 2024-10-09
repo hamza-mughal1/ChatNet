@@ -1,10 +1,10 @@
+from tests.utils import hash_image, UserData, create_user, login_user
 from models import schemas
 from tests.testing_database_setup import client
 from jose import jwt
 from models import Oauth2
 from io import BytesIO
 import pytest
-from tests.utils import hash_image, UserData, create_user, login_user
 
 @pytest.mark.order(1)
 def test_create_user(client):
