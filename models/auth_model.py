@@ -8,12 +8,13 @@ from typing import Annotated
 from jose import jwt, JWTError
 from utilities.settings import setting
 from utilities.api_limiter import ApiLimitDependency
+from utilities.utils import ApiLimitMode
 
 router = APIRouter(tags=["Authentication"])
 
-get_user_api_limit = ApiLimitDependency(req_per_5_sec=2)
+login_api_limit = ApiLimitDependency(req_count=ApiLimitMode.SLOTH.value)
 @router.post("/login", response_model=schemas.Token)
-def login(db : utils.db_dependency, rds: utils.rds_dependency, limit : Annotated[ApiLimitDependency, Depends(get_user_api_limit)], user_credentials: OAuth2PasswordRequestForm = Depends()):
+def login(db : utils.db_dependency, rds: utils.rds_dependency, limit : Annotated[ApiLimitDependency, Depends(login_api_limit)], user_credentials: OAuth2PasswordRequestForm = Depends()):
     user = db.query(db_models.Users).filter(db_models.Users.email == user_credentials.username).first()
     if not user:
         raise HTTPException(status_code=403, detail="Invalid Credentials")
