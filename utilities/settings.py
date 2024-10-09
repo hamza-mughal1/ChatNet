@@ -15,6 +15,8 @@ class EnvSetting(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 43200 # (in total 1 month)
+    otp_email : str = "None"
+    otp_password: str = "None"
 
     class Config:
         env_file = ".env"
