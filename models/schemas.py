@@ -140,3 +140,10 @@ class LikesList(BaseModel):
     user_id: int
     user_name: str
     created_at: datetime
+    
+class OtpSecretKey(BaseModel):
+    secret_key: str
+    
+class VerifyOtp(BaseModel):
+    secret_key: str
+    OTP: int
