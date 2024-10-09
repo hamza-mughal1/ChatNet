@@ -7,5 +7,3 @@ def generator(lenght):
         final_str += i
     
     return final_str
-
-print(generator(64))
