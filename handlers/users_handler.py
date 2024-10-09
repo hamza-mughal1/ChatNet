@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, UploadFile, Request
 from models.users_model import UsersModel
 from models import schemas
-from typing import List
+from typing import Annotated, List
 from models.Oauth2 import verify_token
-from utilities.utils import db_dependency, rds_dependency
+from utilities.utils import db_dependency, rds_dependency, ApiLimitMode, OTP_verification
+from utilities.api_limiter import ApiLimitDependency
+
 router = APIRouter(prefix="/users", tags=["users"])
 
 users_model = UsersModel()
@@ -18,6 +20,17 @@ def all_users(db : db_dependency, request: Request, rds: rds_dependency, page: i
 def create_user(user: schemas.CreateUser, db:  db_dependency, request: Request):
     return users_model.create_user(user, db, request)
 
+if OTP_verification["var"]:
+	create_user_api_limit = ApiLimitDependency(req_count=ApiLimitMode.TURTLE.value)
+	@router.post("/", status_code=201)
+	def create_user(user: schemas.CreateUser, db:  db_dependency, rds: rds_dependency, limit : Annotated[ApiLimitDependency, Depends(create_user_api_limit)]):
+		return users_model.create_user(user, db, rds=rds)
+else:
+	@router.post("/", response_model=schemas.UserOut, status_code=201)
+	def create_user(user: schemas.CreateUser, db:  db_dependency, request: Request):
+		return users_model.create_user_without_otp(user, db, request)
+    
+    
 @router.get("/{id}", response_model=schemas.UserOut)
 def get_user(db :  db_dependency, id: int, request: Request, rds: rds_dependency):
     return users_model.get_user(db, id, request, rds)
@@ -48,9 +61,9 @@ def unfollow_user(db: db_dependency, user_id: int, request: Request, rds: rds_de
 
 @router.get("/following-list/{user_id}", response_model=List[schemas.FollowList])
 def following_list(db: db_dependency, user_id: int, page: int = 1):
-    if page < 1:
-        page = 1
-    return users_model.following_list(db, user_id, page=page)
+	if page < 1:
+		page = 1
+	return users_model.following_list(db, user_id, page=page)
 
 @router.get("/follower-list/{user_id}", response_model=List[schemas.FollowList])
 def follower_list(db: db_dependency, user_id: int, page: int = 1):
