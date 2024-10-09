@@ -1,6 +1,10 @@
 from enum import Enum
 import hashlib
 from PIL import Image
+from utilities.utils import OTP_verification
+
+OTP_verification["var"] = False
+
 
 TITLE = "THIS IS SOME TITLE"
 CONTENT = "THIS IS SOME CONTENT"
