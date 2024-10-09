@@ -38,3 +38,5 @@ def generate_image_path(filename, func_path, request):
     func_path = str(request.base_url)[:-1] + func_path.split("{")[0]
     final_path = func_path + filename
     return final_path
+
+OTP_verification = {"var":True}
