@@ -3,6 +3,7 @@ from handlers import users_handler
 from models.db_models import Users as DbUserModel, Follows, Likes
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from utilities.key_generator import generator
 import utilities.utils as utils
 from models import schemas
 from sqlalchemy.exc import IntegrityError
@@ -40,6 +41,13 @@ class UsersModel():
         user.profile_pic = UsersModel.get_user_profile_url(user, request)
         return user
 
+    @staticmethod
+    def create_user_after_otp(user_info, db: utils.db_dependency, request):
+        user = DbUserModel(**user_info)
+        db.add(user)
+        db.commit()
+        return UsersModel.user_pre_processing_for_urls( user, request)
+    
     def get_all_users(self, db: utils.db_dependency, request, page: int, rds):
         rds_parameter = f"get_users_page_{page}"
         cache = rds.get(rds_parameter)
@@ -61,7 +69,21 @@ class UsersModel():
         
         return l
     
-    def create_user(self, user_info, db: utils.db_dependency, request):
+    def create_user(self, user_info, db: utils.db_dependency, rds: utils.rds_dependency):
+        if db.query(DbUserModel).filter(DbUserModel.user_name == user_info.user_name).first():
+            raise HTTPException(status_code=409, detail="user_name already exists")
+        
+        if db.query(DbUserModel).filter(DbUserModel.email == user_info.email).first():
+            raise HTTPException(status_code=409, detail="email already exists")
+        
+        user_info.password = utils.create_hashed_password(user_info.password)
+        
+        secret_string = generator(64)
+        rds.setex(secret_string, 10*60, pickle.dumps(user_info.model_dump()))
+        
+        return {"secret_key": secret_string}
+    
+    def create_user_without_otp(self, user_info, db: utils.db_dependency, request):
         if db.query(DbUserModel).filter(DbUserModel.user_name == user_info.user_name).first():
             raise HTTPException(status_code=409, detail="user_name already exists")
         
