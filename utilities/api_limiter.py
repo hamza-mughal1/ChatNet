@@ -3,16 +3,15 @@ from utilities.utils import rds_dependency
 
 
 class ApiLimitDependency:
-    def __init__(self, req_per_5_sec):
-        self.req_per_5_sec = req_per_5_sec
+    def __init__(self, req_count, time_frame_in_sec=5):
+        self.req_count = req_count
+        self.time_frame_in_sec = time_frame_in_sec
 
     def __call__(self, request: Request, rds: rds_dependency):
         client_ip = request.client.host
         base_url = request.url
         rds_parameter = str(client_ip) + str(base_url)
         cache = rds.get(rds_parameter)
-        print("REQUEST PARAMETER : ", rds_parameter)
-        print("REQUEST CACHE :", cache)
         if cache:
             cache = int(cache)
             if cache <= 0:
@@ -23,6 +22,6 @@ class ApiLimitDependency:
             rds.setex(rds_parameter, ttl, cache)
             
         else:
-            rds.setex(rds_parameter, 5, int(self.req_per_5_sec))
+            rds.setex(rds_parameter, self.time_frame_in_sec, int(self.req_count))
             
         return None
