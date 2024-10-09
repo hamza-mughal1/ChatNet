@@ -3,6 +3,7 @@ from models.database_orm import engine, Base
 from handlers import posts_handler, users_handler, comments_handler
 from models.auth_model import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+from models.OTP_service import router as otp_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,6 +31,7 @@ app.include_router(posts_handler.router)
 app.include_router(users_handler.router)
 app.include_router(comments_handler.router)
 app.include_router(auth_router)
+app.include_router(otp_router)
 
 # if __name__ == "__main__":
 #     uvicorn.run("app:app", host="0.0.0.0", port=8000)
