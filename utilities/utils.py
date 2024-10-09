@@ -6,6 +6,14 @@ from models.database_orm import get_db
 from sqlalchemy.inspection import inspect
 from models.redis_setup import get_rds
 from redis import Redis
+from enum import Enum
+
+class ApiLimitMode(Enum):
+    SLOTH=2
+    TURTLE=5
+    PANDA=10
+    HORSE=20
+    CHEETAH=30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
