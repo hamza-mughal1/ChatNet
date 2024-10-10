@@ -8,6 +8,7 @@ from models.database_orm import get_db, Base
 import redis
 from models.redis_setup import get_rds
 
+
 def override_get_rds():
     rds = redis.Redis(host=setting.redis_host, port=setting.redis_port, db=1)
     try:
@@ -15,10 +16,12 @@ def override_get_rds():
         yield rds
     finally:
         rds.close()
-        
+
+
 SQLALCHEMY_DATABASE_URL = f"{setting.db}://{setting.db_username}:{setting.db_password}@{setting.db_host}:{setting.test_db_port}/{setting.db_name}_test"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
 
 @pytest.fixture
 def client():
@@ -26,7 +29,9 @@ def client():
     Base.metadata.create_all(bind=engine)
     yield TestClient(app)
 
+
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 def override_get_db():
     db = TestSessionLocal()
@@ -34,6 +39,7 @@ def override_get_db():
         yield db
     finally:
         db.close()
+
 
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_rds] = override_get_rds

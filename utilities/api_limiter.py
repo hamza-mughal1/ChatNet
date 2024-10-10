@@ -16,12 +16,12 @@ class ApiLimitDependency:
             cache = int(cache)
             if cache <= 0:
                 raise HTTPException(status_code=429, detail="too many requests")
-            
+
             cache -= 1
             ttl = rds.ttl(rds_parameter)
             rds.setex(rds_parameter, ttl, cache)
-            
+
         else:
             rds.setex(rds_parameter, self.time_frame_in_sec, int(self.req_count))
-            
+
         return None

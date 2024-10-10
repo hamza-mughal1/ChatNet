@@ -11,9 +11,9 @@ jobs:
       DB_PASSWORD: ${{secrets.DB_PASSWORD}}
       DB_HOST: ${{secrets.DB_HOST}}
       DB_PORT: ${{secrets.DB_PORT}}
-      redis_host : ${{secrets.REDIS_HOST}}
-      redis_port : ${{secrets.REDIS_PORT}}
-      redis_db : ${{secrets.REDIS_DB}}
+      redis_host: ${{secrets.REDIS_HOST}}
+      redis_port: ${{secrets.REDIS_PORT}}
+      redis_db: ${{secrets.REDIS_DB}}
       TEST_DB_PORT: 2345
 
       SECRET_KEY: ${{secrets.SECRET_KEY}}
@@ -35,7 +35,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      
+
       postgres:
         image: postgres
         env:

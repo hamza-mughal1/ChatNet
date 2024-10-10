@@ -15,11 +15,13 @@ from utilities.api_limiter import ApiLimitDependency
 
 
 def generate_otp(length=6):
-    return ''.join([str(random.randint(0, 9)) for _ in range(length)])
+    return "".join([str(random.randint(0, 9)) for _ in range(length)])
+
 
 def send_otp_via_email(sender_email, sender_password, recipient_email, otp, User):
     subject = "Your ChatNet OTP for 2-Step Verification"
-    message = """<!DOCTYPE html>
+    message = (
+        """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -88,32 +90,41 @@ def send_otp_via_email(sender_email, sender_password, recipient_email, otp, User
             <h1>ChatNet</h1>
         </div>
         <div class="body">
-            <p>Dear """ + User + """,</p>
+            <p>Dear """
+        + User
+        + """,</p>
             <p>Thank you for using ChatNet! To complete your login, please use the One-Time Password (OTP) below for two-step verification:</p>
-            <div class="otp-box">""" + str(otp) + """</div>
+            <div class="otp-box">"""
+        + str(otp)
+        + """</div>
             <p>This OTP is valid for the next 5 minutes. Please do not share it with anyone.</p>
             <p>If you did not request this OTP, you can safely ignore this email.</p>
             <p>Best regards,<br>The ChatNet Team</p>
         </div>
         <div class="footer">
-            <p>© """ + str(datetime.now().year) + """ ChatNet. All rights reserved.</p>
+            <p>© """
+        + str(datetime.now().year)
+        + """ ChatNet. All rights reserved.</p>
         </div>
     </div>
 </body>
 </html>
 """
+    )
 
     # Create email
     msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = recipient_email
-    msg['Subject'] = subject
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
 
     # Attach the message
-    msg.attach(MIMEText(message, 'html'))
+    msg.attach(MIMEText(message, "html"))
 
     # Setup the server
-    server = smtplib.SMTP('smtp.gmail.com', 587)  # Use Gmail's SMTP server (or your preferred one)
+    server = smtplib.SMTP(
+        "smtp.gmail.com", 587
+    )  # Use Gmail's SMTP server (or your preferred one)
     server.starttls()
     server.login(sender_email, sender_password)
 
@@ -121,36 +132,63 @@ def send_otp_via_email(sender_email, sender_password, recipient_email, otp, User
     server.sendmail(sender_email, recipient_email, msg.as_string())
     server.quit()
 
+
 router = APIRouter()
 
 send_otp_api_limit = ApiLimitDependency(req_count=1, time_frame_in_sec=15)
+
+
 @router.post("/send-otp")
-def send_otp(secret_string: schemas.OtpSecretKey, background_tasks: BackgroundTasks, rds: utils.rds_dependency, limit : Annotated[ApiLimitDependency, Depends(send_otp_api_limit)]):
+def send_otp(
+    secret_string: schemas.OtpSecretKey,
+    background_tasks: BackgroundTasks,
+    rds: utils.rds_dependency,
+    limit: Annotated[ApiLimitDependency, Depends(send_otp_api_limit)],
+):
     cache = rds.get(secret_string.secret_key)
     if not cache:
         raise HTTPException(status_code=403, detail="invalid secret key")
-    
+
     otp_verification_secret_key = generator(64)
-    
+
     rds.delete(secret_string.secret_key)
     OTP = generate_otp()
     final_OTP_key = str(OTP) + otp_verification_secret_key
-    rds.setex(final_OTP_key, 5*60, cache)
-    
+    rds.setex(final_OTP_key, 5 * 60, cache)
+
     data = pickle.loads(cache)
     recipient_email = data["email"]
     user = data["user_name"]
-    
-    background_tasks.add_task(send_otp_via_email, setting.otp_email, setting.otp_password, recipient_email, OTP, User=user)
 
-    return {"message": "OTP has been sent", "otp_verification_secret_key": otp_verification_secret_key}
+    background_tasks.add_task(
+        send_otp_via_email,
+        setting.otp_email,
+        setting.otp_password,
+        recipient_email,
+        OTP,
+        User=user,
+    )
+
+    return {
+        "message": "OTP has been sent",
+        "otp_verification_secret_key": otp_verification_secret_key,
+    }
+
 
 verify_otp_api_limit = ApiLimitDependency(req_count=5, time_frame_in_sec=10)
+
+
 @router.post("/verify-otp", response_class=schemas.UserOut)
-def verify_otp(data: schemas.VerifyOtp, rds: utils.rds_dependency, db: utils.db_dependency, request: Request, limit : Annotated[ApiLimitDependency, Depends(verify_otp_api_limit)]):
+def verify_otp(
+    data: schemas.VerifyOtp,
+    rds: utils.rds_dependency,
+    db: utils.db_dependency,
+    request: Request,
+    limit: Annotated[ApiLimitDependency, Depends(verify_otp_api_limit)],
+):
     final_OTP_key = str(data.OTP) + data.secret_key
     cache = rds.get(final_OTP_key)
     if not cache:
         raise HTTPException(status_code=403, detail="invalid credentials")
-    
+
     return UsersModel.create_user_after_otp(pickle.loads(cache), db, request)
