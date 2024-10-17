@@ -1,0 +1,14 @@
+[Unit]
+Description=ChatNet Social Media Application
+After=network.target
+
+[Service]
+User=hamza
+Group=hamza
+WorkingDirectory=/home/hamza/app/chatnet
+Environment="PATH=/home/hamza/app/env/bin"
+EnvironmentFile=/home/hamza/.env
+ExecStart=/home/hamza/app/env/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:8000
+
+[Install]
+WantedBy=multi-user.target
