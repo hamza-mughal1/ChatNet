@@ -133,7 +133,7 @@ def send_otp_via_email(sender_email, sender_password, recipient_email, otp, User
     server.quit()
 
 
-router = APIRouter()
+router = APIRouter(prefix="/OTP", tags=["OTP"])
 
 send_otp_api_limit = ApiLimitDependency(req_count=1, time_frame_in_sec=15)
 
@@ -178,7 +178,7 @@ def send_otp(
 verify_otp_api_limit = ApiLimitDependency(req_count=5, time_frame_in_sec=10)
 
 
-@router.post("/verify-otp", response_class=schemas.UserOut)
+@router.post("/verify-otp", response_model=schemas.UserOut)
 def verify_otp(
     data: schemas.VerifyOtp,
     rds: utils.rds_dependency,
