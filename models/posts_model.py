@@ -4,6 +4,7 @@ from models.db_models import Posts as DbPostModel, Users, Comments, Likes
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 from datetime import datetime
+import time
 from PIL import Image  # type:ignore
 from io import BytesIO
 import os
@@ -135,7 +136,8 @@ class PostsModel:
         dic = PostsModel.create_dict(post, request)
 
         # cache is set for 3 minutes (3 seconds * by 60 = 3 minutes)
-        rds.setex(rds_parameter, 3 * 60, pickle.dumps(dic))
+        if dic.get("likes") >= 2000 and (time.time() - (dic.get("created_at").timestamp()+(2*24*60*60))) <= 0: 
+            rds.setex(rds_parameter, 3 * 60, pickle.dumps(dic))
         return dic
 
     def delete_post(self, db: utils.db_dependency, id, token_data, request):
