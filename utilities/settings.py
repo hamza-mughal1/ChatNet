@@ -18,7 +18,7 @@ class EnvSetting(BaseSettings):
     refresh_token_expire_minutes: int = 43200  # (in total 1 month)
     otp_email: str = "None"
     otp_password: str = "None"
-    redis_password: str 
+    redis_password: str = "None"
 
     class Config:
         env_file = ".env"
