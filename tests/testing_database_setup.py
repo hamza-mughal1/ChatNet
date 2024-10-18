@@ -10,7 +10,7 @@ from models.redis_setup import get_rds
 
 
 def override_get_rds():
-    rds = redis.Redis(host=setting.redis_host, port=setting.redis_port, db=1)
+    rds = redis.Redis(host=setting.redis_host, port=setting.redis_port, db=1, ssl=True, password=setting.redis_password)
     try:
         rds.flushall()
         yield rds
