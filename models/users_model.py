@@ -126,7 +126,8 @@ class UsersModel:
         response = UsersModel.user_pre_processing_for_urls(user, request)
 
         # cache is set for 3 minutes (3 seconds * by 60 = 3 minutes)
-        rds.setex(rds_parameter, 3 * 60, pickle.dumps(response))
+        if response.followers >= 10000:
+            rds.setex(rds_parameter, 3 * 60, pickle.dumps(response))
 
         return response
 
